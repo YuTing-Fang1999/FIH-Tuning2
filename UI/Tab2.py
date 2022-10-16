@@ -9,9 +9,12 @@ from .ParamRangeBlock import ParamRangeBlock
 from .HyperSettingBlock import HyperSettingBlock
 
 class Tab2(QWidget):
-    def __init__(self):
+    def __init__(self, data):
         super(Tab2, self).__init__()
-        self.ParamModifyBlock = []
+        self.data = data
+        self.setupUi()
+
+    def setupUi(self):
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         
         horizontalLayout = QHBoxLayout(self)
@@ -61,3 +64,6 @@ class Tab2(QWidget):
                           "QLineEdit{background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}"
                           "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}")
 
+    def set_project(self, project_path):
+        self.param_modify_block.set_project(project_path)
+        self.param_range_block.set_project(project_path)

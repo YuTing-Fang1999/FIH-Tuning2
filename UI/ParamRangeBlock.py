@@ -60,6 +60,9 @@ class ParamRangeBlock(QWidget):
         for i in range(len(title)):
             verticalLayout.addLayout(ParamRangeItem(title[i], name[i], len(col[i])))
 
+    def set_project(self, project_path):
+        
+
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)

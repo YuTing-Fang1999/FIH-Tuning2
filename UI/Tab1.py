@@ -1,15 +1,25 @@
 from PyQt5.QtWidgets import (
     QWidget, QGridLayout, QHBoxLayout,
-    QPushButton, QLabel, QLineEdit
+    QPushButton, QLabel, QLineEdit, QFileDialog
 )
+from PyQt5.QtCore import Qt, pyqtSignal
+
 from .ROI_Setting_Widget import ROI_Setting_Widget
 
-class Tab1(QWidget):
-    def __init__(self):
-        super(Tab1, self).__init__()
 
-        ###### Upper Part ###### 
-        gridLayout = QGridLayout()
+class ProjectSetting(QWidget):
+    set_project_signal = pyqtSignal(str)
+
+    def __init__(self, data):
+        super().__init__()
+        self.defult_path = "./" 
+        self.data = data
+        self.setupUI()
+        self.updateUI()
+        self.setupController()
+
+    def setupUI(self):
+        gridLayout = QGridLayout(self)
 
         self.btn_select_project = QPushButton("選擇project")
         self.btn_select_project.setToolTip("選擇tuning project folder")
@@ -31,25 +41,49 @@ class Tab1(QWidget):
 
         self.lineEdits_bin_name = QLineEdit("")
         gridLayout.addWidget(self.lineEdits_bin_name, 2, 1)
-        ###### Upper Part ###### 
+
+    def updateUI(self):
+        if "project_path" in self.data:
+            self.label_project_path.setText(self.data["project_path"])
+        if "exe_path" in self.data:
+            self.label_exe_path.setText(self.data["exe_path"])
+
+    def setupController(self):
+        self.btn_select_project.clicked.connect(self.select_project)
+        self.btn_select_exe.clicked.connect(self.select_exe)
+
+    def select_project(self):
+        folder_path = QFileDialog.getExistingDirectory(self,"選擇project",self.defult_path) # start path
+        if folder_path == "": return
+        self.defult_path = folder_path
+        self.label_project_path.setText(folder_path)
+        self.data["project_path"] = folder_path
+        self.set_project_signal.emit(folder_path)
+
+    def select_exe(self):
+        filename, filetype = QFileDialog.getOpenFileName(self,"選擇ParameterParser",self.defult_path) # start path
+        if filename == "": return
+        self.filename = filename
+        self.label_exe_path.setText(filename)
+        self.data["exe_path"] = filename
 
 
-        ###### Lower Part ###### 
-        self.ROI_setting_widget = ROI_Setting_Widget()
-        ###### Lower Part ###### 
-
+class Tab1(QWidget):
+    def __init__(self, data):
+        super(Tab1, self).__init__()
+        self.data = data
 
         parentGridLayout = QGridLayout(self)
-        parentGridLayout.addLayout(gridLayout, 0, 0, 1, 1) # Upper Part
-        parentGridLayout.addWidget(self.ROI_setting_widget, 1, 0, 1, 1) # Lower Part
 
-        ###### Set Stretch ###### 
-        gridLayout.setColumnStretch(0, 1)
-        gridLayout.setColumnStretch(1, 8)
-        ###### Set Stretch ###### 
+        # Upper Part
+        self.project_setting = ProjectSetting(data)
+        parentGridLayout.addWidget(self.project_setting, 0, 0, 1, 1)
 
-        ###### Set Style ###### 
+        # Lower Part
+        self.ROI_setting_widget = ROI_Setting_Widget()
+        parentGridLayout.addWidget(self.ROI_setting_widget, 1, 0, 1, 1)
+
+        # Set Style
         self.setStyleSheet("QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"
-                          "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
-                          "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")
-        ###### Set Style ###### 
+                           "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
+                           "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")

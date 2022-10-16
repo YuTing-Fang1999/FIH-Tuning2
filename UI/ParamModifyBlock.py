@@ -71,3 +71,5 @@ class ParamModifyBlock(QWidget):
         for i in range(len(title)):
             verticalLayout.addLayout(ParamModifyItem(title[i], name[i], col[i]))
 
+    def set_project(self, project_path):
+

@@ -6,8 +6,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 class HyperSettingBlock(QWidget):
-    def __init__(self):
+    def __init__(self, data):
         super().__init__()
+        self.data = data
+
         self.lineEdits_hyper_setting = []
         
         gridLayout = QGridLayout(self)

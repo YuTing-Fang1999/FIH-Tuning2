@@ -54,22 +54,47 @@ class ParamModifyItem(QVBoxLayout):
 
         self.checkBoxes_title.clicked.connect(self.toggle_title_checkBoxes)
 
+        
+
+        
+
     def toggle_title_checkBoxes(self):
         checked = self.checkBoxes_title.isChecked()
         for box in self.checkBoxes:
             box.setChecked(checked)
 
 class ParamModifyBlock(QWidget):
-    def __init__(self):
+    def __init__(self, data, config):
         super().__init__()
-        title = ["Noise Profile", "Denoise Scale", "Denoise Edge Softness", "Denoise Weight"]
-        name = [["Y", "Cb", "Cr"],["Y", "Chroma"],["Y", "Chroma"],["Y", "Chroma"]]
-        col = [[3, 4, 4],[3, 4],[3, 4],[3, 4]]
+        self.data = data
+        self.config = config
 
-        verticalLayout = QVBoxLayout(self)
-        verticalLayout.setContentsMargins(0, 0, 0, 0)
-        for i in range(len(title)):
-            verticalLayout.addLayout(ParamModifyItem(title[i], name[i], col[i]))
+        # title = ["Noise Profile", "Denoise Scale", "Denoise Edge Softness", "Denoise Weight"]
+        # name = [["Y", "Cb", "Cr"],["Y", "Chroma"],["Y", "Chroma"],["Y", "Chroma"]]
+        # col = [[3, 4, 4],[3, 4],[3, 4],[3, 4]]
 
-    def set_project(self, project_path):
+
+        self.VLayout = QVBoxLayout(self)
+        self.VLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.update_UI("WNR")
+        
+
+    def update_UI(self, key):
+        config = self.config[key]
+
+        self.param_modify_items = []
+        for i in range(len(config["title"])):
+            item = ParamModifyItem(config["title"][i], config["name"][i], config["col"][i])
+            self.param_modify_items.append(item)
+            self.VLayout.addLayout(item)
+
+    def update_param_value_UI(self, param_value):
+        print('update_param_value_UI')
+        idx = 0
+        for item in self.param_modify_items:
+            for lineEdit in item.lineEdits:
+                lineEdit.setText(str(param_value[idx]))
+                lineEdit.setCursorPosition(0)
+                idx += 1
 

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 
-from .ROI_Setting_Widget import ROI_Setting_Widget
+from .ROI_SettingBlock import ROI_SettingBlock
 
 
 class ProjectSetting(QWidget):
@@ -47,6 +47,8 @@ class ProjectSetting(QWidget):
             self.label_project_path.setText(self.data["project_path"])
         if "exe_path" in self.data:
             self.label_exe_path.setText(self.data["exe_path"])
+        if "bin_name" in self.data:
+            self.lineEdits_bin_name.setText(self.data["bin_name"])
 
     def setupController(self):
         self.btn_select_project.clicked.connect(self.select_project)
@@ -67,6 +69,12 @@ class ProjectSetting(QWidget):
         self.label_exe_path.setText(filename)
         self.data["exe_path"] = filename
 
+    def set_data(self):
+        self.data["project_path"] = self.label_project_path.text()
+        self.data["exe_path"] = self.label_exe_path.text()
+        self.data["bin_name"] = self.lineEdits_bin_name.text()
+
+
 
 class Tab1(QWidget):
     def __init__(self, data):
@@ -80,8 +88,8 @@ class Tab1(QWidget):
         parentGridLayout.addWidget(self.project_setting, 0, 0, 1, 1)
 
         # Lower Part
-        self.ROI_setting_widget = ROI_Setting_Widget()
-        parentGridLayout.addWidget(self.ROI_setting_widget, 1, 0, 1, 1)
+        self.ROI_setting_block = ROI_SettingBlock(data)
+        parentGridLayout.addWidget(self.ROI_setting_block, 1, 0, 1, 1)
 
         # Set Style
         self.setStyleSheet("QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"

@@ -12,26 +12,29 @@ from UI.Tab3 import Tab3
 
 from myPackage.Setting import Setting
 
+import json
+
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setting = Setting(self)
+        self.config = self.read_config()
 
-        self.setupUi()
-        # self.setupController()
+        self.setup_UI()
+        self.setup_controller()
 
-    def setupUi(self):
+    def setup_UI(self):
         self.setWindowTitle("FIH-Tuning")
 
         self.tabWidget = QTabWidget()
 
         self.tab1 = Tab1(self.setting.data)
-        self.tab2 = Tab2(self.setting.data)
+        self.tab2 = Tab2(self.setting.data, self.config)
         # self.tab3 = Tab3(self.setting.data)
 
         self.tabWidget.addTab(self.tab1, "選擇project")
-        # self.tabWidget.addTab(self.tab2, "參數設定")
+        self.tabWidget.addTab(self.tab2, "參數設定")
         # self.tabWidget.addTab(self.tab3, "執行")
 
         self.setCentralWidget(self.tabWidget)
@@ -53,10 +56,15 @@ class MainWindow(QMainWindow):
 
         )
 
-    def setupController(self):
+    def setup_controller(self):
         self.tab1.project_setting.set_project_signal.connect(self.tab2.set_project)
 
     def closeEvent(self, event):
         print('window close')
-        print(self.setting.data)
+        # print(self.setting.data)
+        self.setting.set_data()
         self.setting.write_setting()
+
+    def read_config(self):
+        with open('config.json') as f:
+            return json.load(f)

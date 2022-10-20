@@ -1,8 +1,6 @@
-import cv2
 import os
-from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import pyqtSignal
 
 from time import sleep
 from subprocess import check_output, call
@@ -13,10 +11,9 @@ import threading
 class Capture(QWidget):
     capture_fail_signal = pyqtSignal()
 
-    def __init__(self, ui):
+    def __init__(self):
         super().__init__()
 
-        self.ui = ui
         self.CAMERA_DEBUG = True
         self.CAMERA_PATH = '/sdcard/DCIM/Camera/'
         self.state = threading.Condition()

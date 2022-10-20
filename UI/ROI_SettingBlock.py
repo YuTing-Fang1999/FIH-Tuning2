@@ -4,7 +4,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFileDialog
 import cv2
 import numpy as np
-from .ImageViewer import GraphicsViewer
+from .ImageViewer import ImageViewer
 from .ROI_SelectWindow import ROI_Select_Window
 import os
 import random
@@ -36,9 +36,9 @@ class Score_type_selector(QtWidgets.QComboBox):
 class ROI_SettingBlock(QtWidgets.QWidget):
     to_setting_signal = pyqtSignal(list, list, list)
 
-    def __init__(self, data):
+    def __init__(self, data, capture):
         super().__init__()
-        # self.capture=capture
+        self.capture=capture
         # self.setting=setting
         self.data = data
         self.idx=0
@@ -47,7 +47,7 @@ class ROI_SettingBlock(QtWidgets.QWidget):
         self.type_selector=[]
 
         # Widgets
-        self.label_img = GraphicsViewer()
+        self.label_img = ImageViewer()
         self.label_img.setAlignment(QtCore.Qt.AlignCenter)
         self.label_img.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.ROI_select_window = ROI_Select_Window()
@@ -169,7 +169,7 @@ class ROI_SettingBlock(QtWidgets.QWidget):
         img_name = 'capture'
         self.capture.capture(img_name, capture_num=1)
 
-        img = cv2.imread(img_name+"_0.jpg")
+        img = cv2.imread(img_name+".jpg")
         self.img = img
         self.label_img.setPhoto(img)
         self.ROI_select_window.set_img(img)

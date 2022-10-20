@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
 )
 
 from PyQt5 import QtCore
-class ParamModifyItem(QVBoxLayout):
+class ParamModifyItem(QWidget):
 
     def __init__(self, title, name, col):
         super().__init__()
@@ -14,13 +14,14 @@ class ParamModifyItem(QVBoxLayout):
         self.checkBoxes = []
         self.lineEdits = []
 
+        VLayout = QVBoxLayout(self)
+
         gridLayout = QGridLayout()
         gridLayout.setContentsMargins(0, 0, 0, 0)
         gridLayout.setHorizontalSpacing(7)
 
         title_wraper = QHBoxLayout()
         label_title = QLabel(title)
-        # label_title.setText(title)
         label_title.setStyleSheet("background-color:rgb(72, 72, 72);")
         title_wraper.addWidget(label_title)
 
@@ -49,14 +50,10 @@ class ParamModifyItem(QVBoxLayout):
 
         gridLayout.setColumnStretch(0, 1)
 
-        self.addLayout(title_wraper)
-        self.addLayout(gridLayout)
+        VLayout.addLayout(title_wraper)
+        VLayout.addLayout(gridLayout)
 
         self.checkBoxes_title.clicked.connect(self.toggle_title_checkBoxes)
-
-        
-
-        
 
     def toggle_title_checkBoxes(self):
         checked = self.checkBoxes_title.isChecked()
@@ -68,26 +65,26 @@ class ParamModifyBlock(QWidget):
         super().__init__()
         self.data = data
         self.config = config
+        self.setup_UI()    
 
-        # title = ["Noise Profile", "Denoise Scale", "Denoise Edge Softness", "Denoise Weight"]
-        # name = [["Y", "Cb", "Cr"],["Y", "Chroma"],["Y", "Chroma"],["Y", "Chroma"]]
-        # col = [[3, 4, 4],[3, 4],[3, 4],[3, 4]]
-
-
+    def setup_UI(self):
         self.VLayout = QVBoxLayout(self)
         self.VLayout.setContentsMargins(0, 0, 0, 0)
+        # defult page
+        self.update_UI("OPE","WNR")
 
-        self.update_UI("WNR")
-        
+    def update_UI(self, root, key):
+        config = self.config[root][key]
 
-    def update_UI(self, key):
-        config = self.config[key]
+        # delete
+        for i in range(self.VLayout.count()):
+            self.VLayout.itemAt(i).widget().deleteLater()
 
         self.param_modify_items = []
         for i in range(len(config["title"])):
             item = ParamModifyItem(config["title"][i], config["name"][i], config["col"][i])
             self.param_modify_items.append(item)
-            self.VLayout.addLayout(item)
+            self.VLayout.addWidget(item)
 
     def update_param_value_UI(self, param_value):
         print('update_param_value_UI')
@@ -97,4 +94,25 @@ class ParamModifyBlock(QWidget):
                 lineEdit.setText(str(param_value[idx]))
                 lineEdit.setCursorPosition(0)
                 idx += 1
+
+    def set_data(self):
+        param_change_idx = []
+        param_value = []
+        idx = 0
+        for P in self.ui.ParamModifyBlock:
+            for i in range(len(P.checkBoxes)):
+                if P.checkBoxes[i].isChecked():
+                    if P.lineEdits[i].text() == "":
+                        print(P.title, "有參數打勾卻未填入數字")
+                        return False
+                else:
+                    param_change_idx.append(idx)
+                if P.lineEdits[i].text() == '':
+                    param_value.append(0)
+                else:
+                    param_value.append(float(P.lineEdits[i].text()))
+                idx += 1
+
+        self.data['param_change_idx'] = param_change_idx
+        self.data['param_value'] = param_value
 

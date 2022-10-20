@@ -77,7 +77,7 @@ class ProjectSetting(QWidget):
 
 
 class Tab1(QWidget):
-    def __init__(self, data):
+    def __init__(self, data, capture):
         super(Tab1, self).__init__()
         self.data = data
 
@@ -88,7 +88,7 @@ class Tab1(QWidget):
         parentGridLayout.addWidget(self.project_setting, 0, 0, 1, 1)
 
         # Lower Part
-        self.ROI_setting_block = ROI_SettingBlock(data)
+        self.ROI_setting_block = ROI_SettingBlock(data, capture)
         parentGridLayout.addWidget(self.ROI_setting_block, 1, 0, 1, 1)
 
         # Set Style

@@ -61,11 +61,11 @@ class ImageViewer(QtWidgets.QLabel):
         r.moveCenter(self.rect().center())
         qp.drawPixmap(r, self.scaled)
 
-class GraphicsViewer(QtWidgets.QGraphicsView):
+class ImageViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
 
     def __init__(self, parent = None):
-        super(GraphicsViewer, self).__init__(parent)
+        super(ImageViewer, self).__init__(parent)
         self._zoom = 0
         self._empty = True
         self._scene = QtWidgets.QGraphicsScene(self)

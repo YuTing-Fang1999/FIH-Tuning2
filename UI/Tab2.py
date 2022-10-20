@@ -19,7 +19,7 @@ class TriggerSelector(QComboBox):
         self.data = data
         self.setStyleSheet("font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255);")
 
-    def updataUI(self, aec_trigger_datas):
+    def update_UI(self, aec_trigger_datas):
         item_names = ["lux_idx from {} to {},  gain from {} to {}".format(d[0], d[1], d[2], d[3])for d in aec_trigger_datas]
         self.clear()
         self.addItems(item_names)
@@ -30,14 +30,12 @@ class Tab2(QWidget):
         super(Tab2, self).__init__()
         self.data = data
         self.config = config
-        self.setupUi()
-        self.setupController()
-
-        if "project_path" in data and os.path.exists(data["project_path"]):
-            self.set_project(data["project_path"])
+        self.setup_UI()
+        self.update_UI()
+        self.setup_controller()
 
 
-    def setupUi(self):
+    def setup_UI(self):
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         
         horizontalLayout = QHBoxLayout(self)
@@ -92,18 +90,39 @@ class Tab2(QWidget):
             "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}"
         )
 
+    def update_UI(self):
+        if "project_path" in self.data and os.path.exists(self.data["project_path"]):
+            self.set_project(self.data["project_path"])
 
-    def setupController(self):
+    def setup_controller(self):
         self.trigger_selector.currentIndexChanged[int].connect(self.set_trigger_idx)
+        self.ISP_tree.tree.itemClicked.connect(self.change_param_page)
+
+    def change_param_page(self, item, col):
+        if item.parent() is None: 
+            if item.isExpanded():item.setExpanded(False)
+            else: item.setExpanded(True)
+            return
+
+        root = item.parent().text(0)
+        key = item.text(0)
+        print('change param page to', root, key)
+        self.param_modify_block.update_UI(root, key)
+        self.param_range_block.update_UI(root, key)
+        self.data["page_root"] = root
+        self.data["page_key"] = key
+        self.set_trigger_idx(0)
 
     def set_project(self, folder_path):
         self.data['project_path'] = folder_path
         self.data['project_name'] = folder_path.split('/')[-1]
         self.data['tuning_dir'] = '/'.join(folder_path.split('/')[:-1])
-        self.data['xml_path'] = folder_path + '/Scenario.Default/XML/OPE/wnr24_ope.xml'
+        self.data['xml_path'] = folder_path + '/Scenario.Default/XML/'
         self.set_project_XML(self.data['xml_path'])
 
     def set_project_XML(self, xml_path):
+        if "page_root" not in self.data: return
+        xml_path+=self.config[self.data["page_root"]][self.data["page_key"]]["file_path"]
         # 從檔案載入並解析 XML 資料
         if not os.path.exists(xml_path):
             print('No such file:', xml_path)
@@ -135,13 +154,14 @@ class Tab2(QWidget):
             data.append(aec_trigger.find("gain_end").text)
             aec_trigger_datas.append(data)
 
-        self.trigger_selector.updataUI(aec_trigger_datas)
+        self.trigger_selector.update_UI(aec_trigger_datas)
+        self.set_trigger_idx(0)
 
     def set_trigger_idx(self, trigger_idx, xml_path=''):
         print('trigger_idx', trigger_idx)
         self.data["trigger_idx"] = trigger_idx
 
-        if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']
+        if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']+self.config[self.data["page_root"]][self.data["page_key"]]["file_path"]
         if xml_path=='': return
 
         self.data['dimensions'] = 0
@@ -154,21 +174,15 @@ class Tab2(QWidget):
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
+        config = self.config[self.data["page_root"]][self.data["page_key"]]
         # 子節點與屬性
-        mod_wnr24_aec_datas  =  root.findall("chromatix_wnr24_core/mod_wnr24_post_scale_ratio_data/"\
-                            "post_scale_ratio_data/mod_wnr24_pre_scale_ratio_data/"\
-                            "pre_scale_ratio_data/mod_wnr24_total_scale_ratio_data/"\
-                            "total_scale_ratio_data/mod_wnr24_drc_gain_data/"\
-                            "drc_gain_data/mod_wnr24_hdr_aec_data/hdr_aec_data/"\
-                            "mod_wnr24_aec_data"
-                            )
+        node  =  root.findall(config["xml_node"])
 
-        for i, ele in enumerate(mod_wnr24_aec_datas):
+        for i, ele in enumerate(node):
             if i==trigger_idx:
-                wnr24_rgn_data = ele.find("wnr24_rgn_data")
-                for param_name in self.data['param_names']:
+                wnr24_rgn_data = ele.find(config["data_node"])
+                for param_name in config['param_names']:
                     parent = wnr24_rgn_data.find(param_name+'_tab')
-                    # print(param_name, length, param_value, bound)
 
                     param_value = parent.find(param_name).text.split(' ')
                     param_value = [float(x) for x in param_value]

@@ -5,11 +5,13 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-class ParamRangeItem(QVBoxLayout):
+class ParamRangeItem(QWidget):
     def __init__(self, title, name, row):
             super().__init__()
             self.label_defult_range = []
             self.lineEdits_range = []
+
+            VLayout = QVBoxLayout(self)
 
             gridLayout = QGridLayout()
             gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -42,8 +44,8 @@ class ParamRangeItem(QVBoxLayout):
             gridLayout.setColumnStretch(1, 3)
             gridLayout.setColumnStretch(2, 3)
 
-            self.addWidget(label_title)
-            self.addLayout(gridLayout)
+            VLayout.addWidget(label_title)
+            VLayout.addLayout(gridLayout)
 
 
 class ParamRangeBlock(QWidget):
@@ -57,19 +59,21 @@ class ParamRangeBlock(QWidget):
         # col = [[3, 4, 4],[3, 4],[3, 4],[3, 4]]
         self.VLayout = QVBoxLayout(self)
         self.VLayout.setContentsMargins(0, 0, 0, 0)
-        self.update_UI("WNR")
+        self.update_UI("OPE","WNR")
 
 
-        
+    def update_UI(self, root, key):
+        config = self.config[root][key]
 
-    def update_UI(self, key):
-        config = self.config[key]
+        # delete
+        for i in range(self.VLayout.count()):
+            self.VLayout.itemAt(i).widget().deleteLater()
 
         self.param_range_items = []
         for i in range(len(config["title"])):
             item = ParamRangeItem(config["title"][i], config["name"][i], len(config["col"][i]))
             self.param_range_items.append(item)
-            self.VLayout.addLayout(item)
+            self.VLayout.addWidget(item)
         
 
     def update_defult_range_UI(self, defult_range):
@@ -79,13 +83,13 @@ class ParamRangeBlock(QWidget):
             for label in item.label_defult_range:
                 label.setText(str(defult_range[idx]))
                 idx += 1
-
-        # self.data["coustom_range"] = defult_range
-        # idx = 0
-        # for item in self.param_range_items:
-        #     for lineEdit in item.lineEdits_range:
-        #         lineEdit.setText(str(defult_range[idx]))
-        #         idx += 1
+        
+        self.data["coustom_range"] = defult_range
+        idx = 0
+        for item in self.param_range_items:
+            for lineEdit in item.lineEdits_range:
+                lineEdit.setText(str(defult_range[idx]))
+                idx += 1
 
 if __name__ == "__main__":
     import sys

@@ -75,6 +75,11 @@ class ParamModifyBlock(QWidget):
 
     def update_UI(self, root, key):
         config = self.config[root][key]
+        if root not in self.data: self.data[root]={}
+        if key not in self.data[root]: self.data[root][key]={}
+        self.root = root
+        self.key = key
+
         # delete
         for i in range(self.VLayout.count()):
             self.VLayout.itemAt(i).widget().deleteLater()
@@ -85,15 +90,14 @@ class ParamModifyBlock(QWidget):
             self.param_modify_items.append(item)
             self.VLayout.addWidget(item)
 
-        if root in self.data and key in self.data:
-            data = self.data[root][key]
-            if "param_change_idx" in data:
-                idx = 0
-                for P in self.param_modify_items:
-                    for i in range(len(P.checkBoxes)):
-                        if idx not in data['param_change_idx']:
-                            P.checkBoxes[i].setChecked(True)
-                        idx += 1
+        block_data = self.data[root][key]
+        if "param_change_idx" in block_data:
+            idx = 0
+            for P in self.param_modify_items:
+                for i in range(len(P.checkBoxes)):
+                    if idx not in block_data['param_change_idx']:
+                        P.checkBoxes[i].setChecked(True)
+                    idx += 1
 
 
     def update_param_value_UI(self, param_value):
@@ -107,6 +111,7 @@ class ParamModifyBlock(QWidget):
 
     def set_data(self):
         print('set ParamModifyBlock data')
+
         param_change_idx = []
         param_value = []
         idx = 0
@@ -124,6 +129,6 @@ class ParamModifyBlock(QWidget):
                     param_value.append(float(P.lineEdits[i].text()))
                 idx += 1
 
-        self.data['param_change_idx'] = param_change_idx
-        self.data['param_value'] = param_value
+        self.data[self.root][self.key]['param_change_idx'] = param_change_idx
+        self.data[self.root][self.key]['param_value'] = param_value
 

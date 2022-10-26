@@ -42,30 +42,35 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     def run(self):
         ##### param setting #####
         print('self.TEST_MODE =',self.TEST_MODE)
+        config = self.config[self.data["page_root"]][self.data["page_key"]]
+        block_data = self.data[self.data["page_root"]][self.data["page_key"]]
+        
         # xml path
-        block = self.config[self.data["page_root"]][self.data["page_key"]]
-        self.xml_path = self.data['xml_path']+block["file_path"]
-        self.xml_node = block["xml_node"]
+        self.xml_path = self.data['xml_path']+config["file_path"]
+        self.xml_node = config["xml_node"]
         if not os.path.exists(self.xml_path):
             print("The", self.xml_path, "doesn't exists")
             self.finish_signal.emit()
             sys.exit()
 
+
         # hyperparams
-        self.bounds = self.data['bounds']
         self.popsize = self.data['population size']
         self.generations = self.data['generations']
         self.capture_num = self.data['capture num']
         self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.5, method="exponantial_reverse", rate = 0.05)
-        self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.5, method="exponantial", rate=0.2)
+        # self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.5, method="exponantial", rate=0.2)
+        self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
         
         # params
-        self.dimensions = self.data['dimensions']
-        self.param_names = block['param_names']
-        self.param_value = np.array(self.data['param_value']) # 所有參數值
-        self.param_change_idx = self.data['param_change_idx'] # 需要tune的參數位置
+        self.param_names = config['param_names']
+        self.bounds = block_data['bounds']
+        self.dimensions = block_data['dimensions']
+        self.param_value = np.array(block_data['param_value']) # 所有參數值
+        self.param_change_idx = block_data['param_change_idx'] # 需要tune的參數位置
         self.param_change_num = len(self.param_change_idx) # 需要tune的參數個數
-        self.trigger_idx = self.data["trigger_idx"]
+        self.trigger_idx = block_data["trigger_idx"]
+        if self.TEST_MODE: self.param_value = np.zeros(self.dimensions)
 
         # target score
         self.type_IQM = np.array(self.data["target_type"])
@@ -121,7 +126,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
             # measure score
             now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx), self.param_value)
-            self.fitness.append(self.cal_score_by_weight(now_IQM))
+            self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             print('now IQM', now_IQM)
             print('now score', self.fitness[ind_idx])
@@ -170,7 +175,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # random substitution mutation
         trial = np.where(cross_points, mutant, self.pop[ind_idx])
-        trial = np.around(trial, 8)
+        trial = np.around(trial, 4)
 
         # denormalize to [min_b, max_b]
         trial_denorm = self.min_b + trial * self.diff
@@ -180,7 +185,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # mesure score
         print('\n\ngenerations:', gen_idx, 'individual:', ind_idx)
         now_IQM = self.measure_score_by_param_value('{}/{}'.format(gen_dir, ind_idx), self.param_value)
-        f = self.cal_score_by_weight(now_IQM)
+        f = np.around(self.cal_score_by_weight(now_IQM), 9)
         print('now IQM', now_IQM)
         print('now fitness', f)
 
@@ -215,6 +220,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
                         if os.path.exists(des): os.remove(des)
                         os.replace(src,des)
+                
+                if f==0:
+                    self.finish_signal.emit()
+                    sys.exit()
 
         self.bset_score_plot.update([self.best_score])
         self.hyper_param_plot.update([F, Cr])
@@ -234,7 +243,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
     def measure_score_by_param_value(self, path, param_value):
 
-        # print('param_value =', param_value)
+        print('param_value =', param_value)
         if self.TEST_MODE: return np.array([self.fobj(param_value)]*len(self.type_IQM))
 
         # write param_value to xml

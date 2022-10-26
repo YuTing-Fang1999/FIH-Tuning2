@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 from .ParamModifyBlock import ParamModifyBlock
 from .ParamRangeBlock import ParamRangeBlock
 from .HyperSettingBlock import HyperSettingBlock
+from .PushAndSaveBlock import PushAndSaveBlock
 from .ISP_Tree import ISP_Tree
 
 import os
@@ -53,15 +54,6 @@ class Tab2(QWidget):
         self.param_modify_block = ParamModifyBlock(self.data, self.config)
         verticalLayout.addWidget(self.param_modify_block)
 
-        self.btn_push_phone = QPushButton("推到手機")
-        verticalLayout.addWidget(self.btn_push_phone)
-
-        self.btn_capture = QPushButton("拍照")
-        verticalLayout.addWidget(self.btn_capture)
-
-        self.btn_recover_data = QPushButton("參數復原")
-        verticalLayout.addWidget(self.btn_recover_data)
-
         verticalLayout.addItem(spacerItem)
         
         horizontalLayout.addLayout(verticalLayout)
@@ -79,6 +71,10 @@ class Tab2(QWidget):
         verticalLayout = QVBoxLayout()
         self.hyper_setting_block = HyperSettingBlock(self.data)
         verticalLayout.addWidget(self.hyper_setting_block)
+
+        self.push_and_save = PushAndSaveBlock()
+        verticalLayout.addWidget(self.push_and_save)
+
         verticalLayout.addItem(spacerItem)
         horizontalLayout.addLayout(verticalLayout)
         ###### Right Part ######
@@ -125,7 +121,13 @@ class Tab2(QWidget):
         if "page_root" not in self.data: 
             print('Return because no page root')
             return
-        xml_path+=self.config[self.data["page_root"]][self.data["page_key"]]["file_path"]
+        if "page_key" not in self.data: 
+            print('Return because no page key')
+            return
+        
+        config = self.config[self.data["page_root"]][self.data["page_key"]]
+        xml_path+=config["file_path"]
+
         # 從檔案載入並解析 XML 資料
         if not os.path.exists(xml_path):
             print('Return because no such file:', xml_path)
@@ -135,13 +137,7 @@ class Tab2(QWidget):
         root = tree.getroot()
 
         # 子節點與屬性
-        mod_wnr24_aec_datas  =  root.findall("chromatix_wnr24_core/mod_wnr24_post_scale_ratio_data/"\
-                            "post_scale_ratio_data/mod_wnr24_pre_scale_ratio_data/"\
-                            "pre_scale_ratio_data/mod_wnr24_total_scale_ratio_data/"\
-                            "total_scale_ratio_data/mod_wnr24_drc_gain_data/"\
-                            "drc_gain_data/mod_wnr24_hdr_aec_data/hdr_aec_data/"\
-                            "mod_wnr24_aec_data"
-                            )
+        mod_wnr24_aec_datas  =  root.findall(config["xml_node"])
         # hdr_aec_data 下面有多組 gain 的設定 (mod_wnr24_aec_data)
         # 每組mod_wnr24_aec_data分別有 aec_trigger 與 wnr24_rgn_data
         # 其中 aec_trigger 代表在甚麼樣的ISO光源下觸發
@@ -162,22 +158,23 @@ class Tab2(QWidget):
 
     def set_trigger_idx(self, trigger_idx, xml_path=''):
         print('trigger_idx', trigger_idx)
-        self.data["trigger_idx"] = trigger_idx
 
-        if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']+self.config[self.data["page_root"]][self.data["page_key"]]["file_path"]
+        config = self.config[self.data["page_root"]][self.data["page_key"]]
+        block_data = self.data[self.data["page_root"]][self.data["page_key"]]
+
+        block_data["trigger_idx"] = trigger_idx
+
+        if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']+config["file_path"]
         if xml_path=='': return
 
-        self.data['dimensions'] = 0
-        self.data['lengths'] = []
-        self.data['defult_range'] = []
-        self.data['param_value'] = []
+        block_data['dimensions'] = 0
+        block_data['lengths'] = []
+        block_data['defult_range'] = []
+        block_data['param_value'] = []
 
-        # 從檔案載入並解析 XML 資料
-        if xml_path=='': xml_path=self.data['xml_path']
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
-        config = self.config[self.data["page_root"]][self.data["page_key"]]
         # 子節點與屬性
         node  =  root.findall(config["xml_node"])
 
@@ -193,16 +190,16 @@ class Tab2(QWidget):
                     bound = json.loads(parent.attrib['range'])
                     length = int(parent.attrib['length'])
 
-                    self.data['dimensions'] += length
-                    self.data['lengths'].append(length)
-                    self.data['defult_range'].append(bound)
-                    self.data['param_value'].append(param_value)
+                    block_data['dimensions'] += length
+                    block_data['lengths'].append(length)
+                    block_data['defult_range'].append(bound)
+                    block_data['param_value'].append(param_value)
                 break
 
         # converting 2d list into 1d
-        self.data['param_value'] = sum(self.data['param_value'], [])
+        block_data['param_value'] = sum(block_data['param_value'], [])
 
-        self.param_modify_block.update_param_value_UI(self.data['param_value'])
-        self.param_range_block.update_defult_range_UI(self.data['defult_range'])
+        self.param_modify_block.update_param_value_UI(block_data['param_value'])
+        self.param_range_block.update_defult_range_UI(block_data['defult_range'])
 
 

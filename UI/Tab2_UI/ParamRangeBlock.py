@@ -68,6 +68,8 @@ class ParamRangeBlock(QWidget):
 
     def update_UI(self, root, key):
         config = self.config[root][key]
+        if root not in self.data: self.data[root]={}
+        if key not in self.data[root]: self.data[root][key]={}
         self.root = root
         self.key = key
 
@@ -99,20 +101,23 @@ class ParamRangeBlock(QWidget):
 
     def set_data(self):
         print('set ParamRangeBlock data')
-        self.data[self.root][self.key]["coustom_range"] = []
+        config = self.config[self.root][self.key]
+        block_data = self.data[self.root][self.key]
+        block_data["coustom_range"] = []
+
         for item in self.param_range_items:
             for lineEdit in item.lineEdits_range:
                 if lineEdit.text() == "": 
-                    self.data[self.root][self.key]["coustom_range"] = []
+                    block_data["coustom_range"] = []
                     break
-                self.data[self.root][self.key]["coustom_range"].append(json.loads(lineEdit.text()))
+                block_data["coustom_range"].append(json.loads(lineEdit.text()))
 
-        if len(self.data[self.root][self.key]["coustom_range"]) > 0:
-            self.data[self.root][self.key]['bounds'] = [self.data[self.root][self.key]['coustom_range'][0]]*self.data[self.root][self.key]['lengths'][0]
-            for i in range(1, len(self.data['lengths'])):
-                self.data['bounds'] = np.concatenate([self.data['bounds'] , [self.data['coustom_range'][i]]*self.data['lengths'][i]])
+        if len(block_data["coustom_range"]) > 0:
+            block_data['bounds'] = [block_data['coustom_range'][0]]*block_data['lengths'][0]
+            for i in range(1, len(block_data['lengths'])):
+                block_data['bounds'] = np.concatenate([block_data['bounds'] , [block_data['coustom_range'][i]]*block_data['lengths'][i]])
 
-            self.data['bounds']=self.data['bounds'].tolist()
+            block_data['bounds']=block_data['bounds'].tolist()
 
 if __name__ == "__main__":
     import sys

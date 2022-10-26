@@ -37,13 +37,10 @@ class Setting(QWidget):
         return True
 
     def read_setting(self):
-        if os.path.exists('setting.pkl'):
-            with open('setting.pkl', 'rb') as f:
-                print("read setting")
-                self.data = pickle.load(f)
-                
-                # self.data.pop("mod_wnr24_aec_data_list")
-                # self.data.pop("xml_path")
+        if os.path.exists('setting.json'):
+            with open('setting.json', 'r') as f:
+                self.data = json.load(f)
+
         else:
             print("找不到設定檔，重新生成一個新的設定檔")
             self.data = {
@@ -51,17 +48,9 @@ class Setting(QWidget):
                 "page_key": "WNR"
             }
 
-        print("setting.pkl")
-        import pprint
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.data)
-
     def write_setting(self):
         print('write_setting')
         self.set_data(alert=False)
-        
-        # Writing to sample.json
         with open("setting.json", "w") as outfile:
             outfile.write(json.dumps(self.data, indent=4))
-        # with open("setting.pkl", "wb") as outfile:
-        #     pickle.dump(self.data, outfile)
+

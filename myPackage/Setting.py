@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSignal
 import pickle
 import os
 import xml.etree.ElementTree as ET
+import json
 
 class Setting(QWidget):
     alert_info_signal = pyqtSignal(str, str)
@@ -58,5 +59,9 @@ class Setting(QWidget):
     def write_setting(self):
         print('write_setting')
         self.set_data(alert=False)
-        with open("setting.pkl", "wb") as outfile:
-            pickle.dump(self.data, outfile)
+        
+        # Writing to sample.json
+        with open("setting.json", "w") as outfile:
+            outfile.write(json.dumps(self.data, indent=4))
+        # with open("setting.pkl", "wb") as outfile:
+        #     pickle.dump(self.data, outfile)

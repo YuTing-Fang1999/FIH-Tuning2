@@ -10,9 +10,44 @@ class Push_Btn(QtWidgets.QPushButton):
         self.clicked.connect(lambda: signal.emit(self.idx))
 
 class Param_window(QtWidgets.QMainWindow):
-    put_to_phone_signal = pyqtSignal(int)
-    
-    def setup(self, popsize, param_change_num, IQM_names=[]):
+    push_to_phone_signal = pyqtSignal(int)
+
+    def __init__(self):
+        super().__init__()
+        # self.TEST_MODE = TEST_MODE
+
+        self.setWindowTitle("param window")
+        self.resize(0, 0)
+        self.centralwidget = QtWidgets.QWidget(self)
+        self.verticalLayout_parent = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.gridLayout = QtWidgets.QGridLayout()
+     
+        self.gridLayout.setColumnStretch(1, 1)
+        self.gridLayout.setColumnStretch(2, 1)
+        self.gridLayout.setColumnStretch(3, 1)
+        self.gridLayout.setColumnStretch(4, 1)
+        self.verticalLayout_parent.addLayout(self.gridLayout)
+        self.setCentralWidget(self.centralwidget)
+
+        self.setStyleSheet("QMainWindow {background-color: rgb(54, 69, 79);}"
+                           """
+                                QLabel {
+                                    font-size:10pt; font-family:微軟正黑體; font-weight: bold;
+                                    color: white;
+                                    border: 1px solid black;
+                                    padding: 3px;
+                                }
+                                QToolTip { 
+                                    background-color: black; 
+                                    border: black solid 1px
+                                }
+                                QPushButton{
+                                    font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);
+                                }
+                                """
+                           )
+
+    def setup(self, popsize, param_change_num, IQM_names):
         self.popsize = popsize
         self.param_change_num = param_change_num
         self.move(100, 100)
@@ -21,6 +56,10 @@ class Param_window(QtWidgets.QMainWindow):
         self.label_trial_denorm = []
         self.label_score = []
         self.label_IQM = []
+
+        # delete
+        for i in range(self.gridLayout.count()):
+            self.gridLayout.itemAt(i).widget().deleteLater()
 
         # title
         label = QtWidgets.QLabel(self.centralwidget)
@@ -87,49 +126,15 @@ class Param_window(QtWidgets.QMainWindow):
             self.label_IQM.append(label_IQM)
 
             if len(IQM_names):
-                self.gridLayout.addWidget(Push_Btn(i, self.put_to_phone_signal), i+1, param_change_num+2+len(IQM_names), 1, 1)
+                self.gridLayout.addWidget(Push_Btn(i, self.push_to_phone_signal), i+1, param_change_num+2+len(IQM_names), 1, 1)
 
 
-    def __init__(self, ):
-        super().__init__()
     
-        self.setWindowTitle("param window")
-        self.resize(0, 0)
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.verticalLayout_parent = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.gridLayout = QtWidgets.QGridLayout()
-     
-        self.gridLayout.setColumnStretch(1, 1)
-        self.gridLayout.setColumnStretch(2, 1)
-        self.gridLayout.setColumnStretch(3, 1)
-        self.gridLayout.setColumnStretch(4, 1)
-        self.verticalLayout_parent.addLayout(self.gridLayout)
-        self.setCentralWidget(self.centralwidget)
-
-        self.setStyleSheet("QMainWindow {background-color: rgb(54, 69, 79);}"
-                           """
-                                QLabel {
-                                    font-size:10pt; font-family:微軟正黑體; font-weight: bold;
-                                    color: white;
-                                    border: 1px solid black;
-                                    padding: 3px;
-                                }
-                                QToolTip { 
-                                    background-color: black; 
-                                    border: black solid 1px
-                                }
-                                QPushButton{
-                                    font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);
-                                }
-                                """
-                           )
-
-    def update(self, idx, trial_denorm, score, IQM=[]):
+    def update(self, idx, trial_denorm, score, IQM):
         self.fitness[idx] = score
         self.label_score[idx].setText(str(np.round(score, 5)))
         for j in range(self.param_change_num):
             self.label_trial_denorm[idx][j].setText(str(np.round(trial_denorm[j], 4)))
-
 
         order = np.argsort(self.fitness)
         # print(order)
@@ -137,12 +142,10 @@ class Param_window(QtWidgets.QMainWindow):
         # print(color)
         # print()
         for i, c in zip(order, color):
-            self.label_score[i].setStyleSheet(
-                "color: rgb({0}, {0}, {0})".format(c))
+            self.label_score[i].setStyleSheet("color: rgb({0}, {0}, {0})".format(c))
 
         for j in range(len(IQM)):
-            self.label_IQM[idx][j].setText(
-                str(np.round(IQM[j], 4)))
+            self.label_IQM[idx][j].setText(str(np.round(IQM[j], 4)))
 
 
 if __name__ == "__main__":

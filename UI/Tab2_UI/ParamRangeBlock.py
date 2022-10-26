@@ -55,17 +55,21 @@ class ParamRangeBlock(QWidget):
         super().__init__()
         self.data = data
         self.config = config
+        self.root = self.data["page_root"]
+        self.key = self.data["page_key"]
 
         # title = ["Noise Profile", "Denoise Scale", "Denoise Edge Softness", "Denoise Weight"]
         # name = [["Y", "Cb", "Cr"],["Y", "Chroma"],["Y", "Chroma"],["Y", "Chroma"]]
         # col = [[3, 4, 4],[3, 4],[3, 4],[3, 4]]
         self.VLayout = QVBoxLayout(self)
         self.VLayout.setContentsMargins(0, 0, 0, 0)
-        self.update_UI("OPE","WNR")
+        self.update_UI(self.root, self.key)
 
 
     def update_UI(self, root, key):
         config = self.config[root][key]
+        self.root = root
+        self.key = key
 
         # delete
         for i in range(self.VLayout.count()):
@@ -79,14 +83,14 @@ class ParamRangeBlock(QWidget):
         
 
     def update_defult_range_UI(self, defult_range):
-        print('update_defult_range_UI')
+        print('update ParamRangeBlock UI')
         idx = 0
         for item in self.param_range_items:
             for label in item.label_defult_range:
                 label.setText(str(defult_range[idx]))
                 idx += 1
         
-        self.data["coustom_range"] = defult_range
+        self.data[self.root][self.key]["coustom_range"] = defult_range
         idx = 0
         for item in self.param_range_items:
             for lineEdit in item.lineEdits_range:
@@ -95,16 +99,20 @@ class ParamRangeBlock(QWidget):
 
     def set_data(self):
         print('set ParamRangeBlock data')
-        self.data["coustom_range"] = []
+        self.data[self.root][self.key]["coustom_range"] = []
         for item in self.param_range_items:
             for lineEdit in item.lineEdits_range:
-                self.data["coustom_range"].append(json.loads(lineEdit.text()))
+                if lineEdit.text() == "": 
+                    self.data[self.root][self.key]["coustom_range"] = []
+                    break
+                self.data[self.root][self.key]["coustom_range"].append(json.loads(lineEdit.text()))
 
-        self.data['bounds'] = [self.data['coustom_range'][0]]*self.data['lengths'][0]
-        for i in range(1, len(self.data['lengths'])):
-            self.data['bounds'] = np.concatenate([self.data['bounds'] , [self.data['coustom_range'][i]]*self.data['lengths'][i]])
+        if len(self.data[self.root][self.key]["coustom_range"]) > 0:
+            self.data[self.root][self.key]['bounds'] = [self.data[self.root][self.key]['coustom_range'][0]]*self.data[self.root][self.key]['lengths'][0]
+            for i in range(1, len(self.data['lengths'])):
+                self.data['bounds'] = np.concatenate([self.data['bounds'] , [self.data['coustom_range'][i]]*self.data['lengths'][i]])
 
-        self.data['bounds']=self.data['bounds'].tolist()
+            self.data['bounds']=self.data['bounds'].tolist()
 
 if __name__ == "__main__":
     import sys

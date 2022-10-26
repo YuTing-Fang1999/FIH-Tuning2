@@ -13,7 +13,7 @@ from UI.Tab3_UI.Tab3 import Tab3
 from myPackage.Setting import Setting
 from myPackage.Tuning.Tuning import Tuning
 from myPackage.Capture import Capture
-
+from myPackage.Param_window import Param_window
 
 import json
 import threading
@@ -37,7 +37,8 @@ class MainWindow(QMainWindow):
 
     def setup_UI(self):
         self.setWindowTitle("FIH-Tuning")
-
+        self.param_window = Param_window()
+        
         self.tabWidget = QTabWidget()
 
         self.tab1 = Tab1(self.data, self.capture)
@@ -75,12 +76,19 @@ class MainWindow(QMainWindow):
     def setup_controller(self):
         self.tab1.project_setting.set_project_signal.connect(self.tab2.set_project)
         self.tab3.upper_part.btn_run.clicked.connect(self.run)
+        self.tab3.upper_part.btn_param_window.clicked.connect(self.show_param_window)
+
+        self.capture.capture_fail_signal.connect(self.capture_fail)
+        self.setting.alert_info_signal.connect(self.alert_info)
+        
+        # tuning to UI
         self.tuning.finish_signal.connect(self.finish)
         self.tuning.set_score_signal.connect(self.tab3.upper_part.set_score)
         self.tuning.set_generation_signal.connect(self.tab3.upper_part.set_generation)
         self.tuning.set_individual_signal.connect(self.tab3.upper_part.set_individual)
-        self.capture.capture_fail_signal.connect(self.capture_fail)
-        self.setting.alert_info_signal.connect(self.alert_info)
+        # tuning to param window
+        self.tuning.update_param_window_signal.connect(self.update_param_window)
+        self.tuning.setup_param_window_signal.connect(self.setup_param_window)
 
     def read_config(self):
         with open('config.json') as f:
@@ -138,6 +146,20 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         print('window close')
         self.setting.write_setting()
+
+    def set_statusbar(self, text):
+        self.statusbar.showMessage(text, 5000)
+
+    ##### param_window #####
+    def show_param_window(self):
+        self.param_window.showNormal()
+    
+    def setup_param_window(self, popsize, param_change_num, IQM_names):
+        self.param_window.setup(popsize=popsize, param_change_num=param_change_num, IQM_names=IQM_names)
+
+    def update_param_window(self, idx, param_value, score, IQM):
+        self.param_window.update(idx, param_value, score, IQM)
+    ##### param_window #####
 
 
 def _async_raise(tid, exctype):

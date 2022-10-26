@@ -71,11 +71,10 @@ class ParamModifyBlock(QWidget):
         self.VLayout = QVBoxLayout(self)
         self.VLayout.setContentsMargins(0, 0, 0, 0)
         # defult page
-        self.update_UI("OPE","WNR")
+        self.update_UI(self.data["page_root"], self.data["page_key"])
 
     def update_UI(self, root, key):
         config = self.config[root][key]
-
         # delete
         for i in range(self.VLayout.count()):
             self.VLayout.itemAt(i).widget().deleteLater()
@@ -86,8 +85,19 @@ class ParamModifyBlock(QWidget):
             self.param_modify_items.append(item)
             self.VLayout.addWidget(item)
 
+        if root in self.data and key in self.data:
+            data = self.data[root][key]
+            if "param_change_idx" in data:
+                idx = 0
+                for P in self.param_modify_items:
+                    for i in range(len(P.checkBoxes)):
+                        if idx not in data['param_change_idx']:
+                            P.checkBoxes[i].setChecked(True)
+                        idx += 1
+
+
     def update_param_value_UI(self, param_value):
-        print('update_param_value_UI')
+        print('update ParamModifyBlock UI')
         idx = 0
         for item in self.param_modify_items:
             for lineEdit in item.lineEdits:
@@ -96,6 +106,7 @@ class ParamModifyBlock(QWidget):
                 idx += 1
 
     def set_data(self):
+        print('set ParamModifyBlock data')
         param_change_idx = []
         param_value = []
         idx = 0

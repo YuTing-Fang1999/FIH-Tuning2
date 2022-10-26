@@ -80,9 +80,16 @@ class UpperPart(QWidget):
 
         self.label_individual = QLabel("#")
         gridLayout_gen.addWidget(self.label_individual, 1, 1, 1, 1)
-
         horizontalLayout.addLayout(gridLayout_gen)
 
         self.mytimer = MyTimer()
-        
         horizontalLayout.addWidget(self.mytimer)
+
+    def set_score(self, score):
+        self.label_score.setText(score)
+
+    def set_generation(self, gen_idx):
+        self.label_generation.setText(gen_idx)
+
+    def set_individual(self, ind_idx):
+        self.label_individual.setText(ind_idx)

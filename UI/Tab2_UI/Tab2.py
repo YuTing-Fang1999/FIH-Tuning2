@@ -121,11 +121,14 @@ class Tab2(QWidget):
         self.set_project_XML(self.data['xml_path'])
 
     def set_project_XML(self, xml_path):
-        if "page_root" not in self.data: return
+        print('Read XML')
+        if "page_root" not in self.data: 
+            print('Return because no page root')
+            return
         xml_path+=self.config[self.data["page_root"]][self.data["page_key"]]["file_path"]
         # 從檔案載入並解析 XML 資料
         if not os.path.exists(xml_path):
-            print('No such file:', xml_path)
+            print('Return because no such file:', xml_path)
             return
 
         tree = ET.parse(xml_path)

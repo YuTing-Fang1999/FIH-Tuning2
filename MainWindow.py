@@ -1,16 +1,17 @@
 import sys
 from PyQt5.QtWidgets import (
-    QTabWidget,
+    QTabWidget, QStatusBar,
     QMainWindow, QApplication,
     QLabel, QCheckBox, QComboBox, QListWidget, QLineEdit,
     QLineEdit, QSpinBox, QDoubleSpinBox, QSlider, QMessageBox
 )
-from PyQt5.QtCore import Qt
-from UI.Tab1 import Tab1
-from UI.Tab2 import Tab2
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
+
+from UI.Tab1_UI.Tab1 import Tab1
+from UI.Tab2_UI.Tab2 import Tab2
 from UI.Tab3_UI.Tab3 import Tab3
 from myPackage.Setting import Setting
-from myPackage.Tuning import Tuning
+from myPackage.Tuning.Tuning import Tuning
 from myPackage.Capture import Capture
 
 
@@ -18,21 +19,21 @@ import json
 import threading
 import ctypes, inspect
 
-
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
         self.config = self.read_config()
-
         self.setting = Setting(self)
         self.data = self.setting.data
         self.capture = Capture()
-        self.tuning = Tuning(self, self.data, self.capture)
+        self.setup_UI()
+        
+        self.tuning = Tuning(self, self.data, self.config, self.capture)
+        self.setup_controller()
         
 
-        self.setup_UI()
-        self.setup_controller()
+        
 
     def setup_UI(self):
         self.setWindowTitle("FIH-Tuning")
@@ -48,6 +49,11 @@ class MainWindow(QMainWindow):
         self.tabWidget.addTab(self.tab3, "執行")
 
         self.setCentralWidget(self.tabWidget)
+
+        self.statusbar = QStatusBar(self)
+        self.setStatusBar(self.statusbar)
+        self.statusbar.setStyleSheet("color: white")
+        self.statusbar.showMessage('只存在3秒的消息', 3000)
 
         self.setStyleSheet(
             """
@@ -70,6 +76,9 @@ class MainWindow(QMainWindow):
         self.tab1.project_setting.set_project_signal.connect(self.tab2.set_project)
         self.tab3.upper_part.btn_run.clicked.connect(self.run)
         self.tuning.finish_signal.connect(self.finish)
+        self.tuning.set_score_signal.connect(self.tab3.upper_part.set_score)
+        self.tuning.set_generation_signal.connect(self.tab3.upper_part.set_generation)
+        self.tuning.set_individual_signal.connect(self.tab3.upper_part.set_individual)
         self.capture.capture_fail_signal.connect(self.capture_fail)
         self.setting.alert_info_signal.connect(self.alert_info)
 
@@ -89,7 +98,8 @@ class MainWindow(QMainWindow):
         self.tab3.lower_part.tab_info.label.setAlignment(Qt.AlignLeft)
         self.tab3.lower_part.tab_info.label.setText(
             json.dumps(self.data, indent=2) + '\n' +
-            json.dumps(self.config[self.data["page_root"]][self.data["page_key"]], indent=2))
+            json.dumps(self.config[self.data["page_root"]][self.data["page_key"]], indent=2)
+        )
 
         # 建立一個子執行緒
         self.tuning_task = threading.Thread(target=lambda: self.tuning.run())

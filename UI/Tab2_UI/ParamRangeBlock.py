@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (
     QPushButton, QLabel, QLineEdit, QCheckBox
 )
 from PyQt5.QtCore import Qt
+import numpy as np
+import json
 
 class ParamRangeItem(QWidget):
     def __init__(self, title, name, row):
@@ -90,6 +92,19 @@ class ParamRangeBlock(QWidget):
             for lineEdit in item.lineEdits_range:
                 lineEdit.setText(str(defult_range[idx]))
                 idx += 1
+
+    def set_data(self):
+        print('set ParamRangeBlock data')
+        self.data["coustom_range"] = []
+        for item in self.param_range_items:
+            for lineEdit in item.lineEdits_range:
+                self.data["coustom_range"].append(json.loads(lineEdit.text()))
+
+        self.data['bounds'] = [self.data['coustom_range'][0]]*self.data['lengths'][0]
+        for i in range(1, len(self.data['lengths'])):
+            self.data['bounds'] = np.concatenate([self.data['bounds'] , [self.data['coustom_range'][i]]*self.data['lengths'][i]])
+
+        self.data['bounds']=self.data['bounds'].tolist()
 
 if __name__ == "__main__":
     import sys

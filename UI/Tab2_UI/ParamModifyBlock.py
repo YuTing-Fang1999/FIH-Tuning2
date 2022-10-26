@@ -99,7 +99,7 @@ class ParamModifyBlock(QWidget):
         param_change_idx = []
         param_value = []
         idx = 0
-        for P in self.ui.ParamModifyBlock:
+        for P in self.param_modify_items:
             for i in range(len(P.checkBoxes)):
                 if P.checkBoxes[i].isChecked():
                     if P.lineEdits[i].text() == "":

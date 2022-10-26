@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 
-from .ROI_SettingBlock import ROI_SettingBlock
+from UI.Tab1_UI.ROI_SettingBlock import ROI_SettingBlock
 
 
 class ProjectSetting(QWidget):

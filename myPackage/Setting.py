@@ -24,6 +24,10 @@ class Setting(QWidget):
         if self.ui.tab2.param_modify_block.set_data() and alert:
             self.alert_info_signal.emit("參數未填完", "有參數打勾卻未填入數字")
             return False
+
+        if self.ui.tab2.param_range_block.set_data() and alert:
+            self.alert_info_signal.emit("參數未填完", "有參數打勾卻未填入數字")
+            return False
         
         if self.ui.tab2.hyper_setting_block.set_data() and alert:
             self.alert_info_signal.emit("參數未填完", "超參數部分的參數未填完")

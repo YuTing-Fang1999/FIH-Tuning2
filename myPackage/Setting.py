@@ -14,23 +14,24 @@ class Setting(QWidget):
         self.read_setting()
 
     def set_data(self, alert=True):
-        if self.ui.tab1.project_setting.set_data() and alert:
+        print('setting: set data')
+        if self.ui.project_setting_page.set_data() and alert:
             self.alert_info_signal.emit("參數未填完", "project部分的參數未填完")
             return False
 
-        if self.ui.tab1.ROI_setting_block.set_data() and alert:
+        if self.ui.ROI_setting_page.set_data() and alert:
             self.alert_info_signal.emit("參數未填完", "ROI設置部分的參數未填完")
             return False
 
-        if self.ui.tab2.param_modify_block.set_data() and alert:
+        if self.ui.parameter_setting_page.param_modify_block.set_data() and alert:
             self.alert_info_signal.emit("參數未填完", "有參數打勾卻未填入數字")
             return False
 
-        if self.ui.tab2.param_range_block.set_data() and alert:
-            self.alert_info_signal.emit("參數未填完", "有參數打勾卻未填入數字")
+        if self.ui.parameter_setting_page.param_range_block.set_data() and alert:
+            self.alert_info_signal.emit("參數未填完", "有參數未填入數字")
             return False
         
-        if self.ui.tab2.hyper_setting_block.set_data() and alert:
+        if self.ui.parameter_setting_page.hyper_setting_block.set_data() and alert:
             self.alert_info_signal.emit("參數未填完", "超參數部分的參數未填完")
             return False
 

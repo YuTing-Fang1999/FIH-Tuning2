@@ -8,6 +8,8 @@
             574,
             846
         ],
+        [],
+        [],
         []
     ],
     "OPE": {
@@ -136,6 +138,31 @@
                 ]
             ],
             "param_change_idx": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
                 25,
                 26,
                 27,
@@ -276,12 +303,12 @@
             ]
         }
     },
-    "project_path": "C:/Users/88691/Documents/\u5112\u59b9/FIH/s5k3l6_c7project",
+    "project_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project",
     "project_name": "s5k3l6_c7project",
-    "tuning_dir": "C:/Users/88691/Documents/\u5112\u59b9/FIH",
-    "xml_path": "C:/Users/88691/Documents/\u5112\u59b9/FIH/s5k3l6_c7project/Scenario.Default/XML/",
-    "exe_path": "",
-    "bin_name": "",
+    "tuning_dir": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning",
+    "xml_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project/Scenario.Default/XML/",
+    "exe_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/ParameterParser.exe",
+    "bin_name": "com.qti.tuned.shinetech_s53l6.bin",
     "target_type": [
         "sharpness"
     ],
@@ -293,5 +320,7 @@
     ],
     "population size": 10,
     "generations": 40,
-    "capture num": 1
+    "capture num": 1,
+    "saved_dir_name": "123555",
+    "saved_img_name": "123"
 }

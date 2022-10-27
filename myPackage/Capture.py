@@ -54,7 +54,8 @@ class Capture(QWidget):
         file_names = r.decode('utf-8').split('\n')[1:capture_num+1] 
         file_names = [f.split(' ')[-1][:-1] for f in file_names]
         # print(file_names)
-
+        print('file_names')
+        print(file_names)
         if file_names[0] == '':
             self.capture_fail()
             print('正在重新拍攝...')

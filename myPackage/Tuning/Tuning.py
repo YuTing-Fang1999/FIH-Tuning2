@@ -3,6 +3,7 @@ from PyQt5.QtCore import pyqtSignal, QThread, QObject
 
 from .HyperOptimizer import HyperOptimizer
 from .MplCanvasTiming import MplCanvasTiming
+from .ImageMeasurement import *
 
 import numpy as np
 from time import sleep
@@ -26,18 +27,23 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     setup_param_window_signal = pyqtSignal(int, int, np.ndarray) # popsize, param_change_num, IQM_names
     update_param_window_signal = pyqtSignal(int, np.ndarray, float, np.ndarray)
 
-    def __init__(self, ui, data, config, capture):
+    def __init__(self, run_page_plot, data, config, capture):
         super().__init__()
-        self.ui = ui
+        self.run_page_plot = run_page_plot
         self.data = data
         self.config = config
         self.capture = capture
         self.is_run = False
-        self.TEST_MODE = True
+        self.TEST_MODE = False
+
+        self.calFunc = {}
+        self.calFunc["sharpness"] = get_sharpness
+        self.calFunc["chroma stdev"] = get_chroma_stdev
+        self.calFunc["luma stdev"] = get_luma_stdev
 
         # plot
-        self.bset_score_plot = MplCanvasTiming(self.ui.tab3.lower_part.tab_score.label_plot, color=['r', 'g'], label=['score'])
-        self.hyper_param_plot = MplCanvasTiming(self.ui.tab3.lower_part.tab_hyper.label_plot, color=['g', 'r'], label=['F', 'Cr'])
+        self.bset_score_plot = MplCanvasTiming(self.run_page_plot.tab_score.label_plot, color=['r', 'g'], label=['score'])
+        self.hyper_param_plot = MplCanvasTiming(self.run_page_plot.tab_hyper.label_plot, color=['g', 'r'], label=['F', 'Cr'])
 
     def run(self):
         ##### param setting #####
@@ -82,7 +88,6 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.roi = self.data['roi']
 
         # get the bounds of each parameter
-        print(self.bounds)
         self.min_b, self.max_b = np.asarray(self.bounds).T
         self.min_b = self.min_b[self.param_change_idx]
         self.max_b = self.max_b[self.param_change_idx]
@@ -267,7 +272,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         root = tree.getroot()
 
         # 子節點與屬性
-        mod_aec_datas  =  root.findall(self.xml_node)
+        mod_aec_datas = root.findall(self.xml_node)
 
         for i, ele in enumerate(mod_aec_datas):
             if i==self.trigger_idx:
@@ -293,7 +298,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
     def buildAndPushToCamera(self):
         print('push bin to camera...')
-        call(['adb', 'shell', 'input', 'keyevent = KEYCODE_HOME'])
+        os.system('adb shell input keyevent = KEYCODE_HOME')
         v1 = self.data["exe_path"]
         v2 = self.data["project_path"]
         v3 = self.data["bin_name"]
@@ -308,7 +313,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if self.capture_num==1: p = str(path+".jpg")
             else: p = path+"_"+str(i)+".jpg"
             img = cv2.imread(p, cv2.IMREAD_COLOR)
-            IQM_scores.append(self.calIQM(self.type_IQM, img, self.roi))
+            IQM_scores.append(self.calIQM(img))
             # print(i, IQM_scores[i])
 
         IQM_scores = np.array(IQM_scores)
@@ -344,7 +349,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         return (np.abs(self.target_IQM-now_IQM)/self.std_IQM).dot(self.weight_IQM.T)
 
     def mkdir(self, path):
-        if self.TEST_MODE: return
+        if self.TEST_MODE: 
+            print('mkdir {} return because TEST_MODE'.format(path))
+            return
         if not os.path.exists(path):
             os.makedirs(path)
             print("The", path, "dir is created!")
@@ -382,7 +389,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # update param_value
         self.param_value[self.param_change_idx] = trial_denorm
 
-        self.setParamToXML(self.param_names, self.xml_path, self.param_value)
+        self.setParamToXML(self.param_value)
         # 使用bat編譯，將bin code推入手機
         self.buildAndPushToCamera()
 

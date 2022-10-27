@@ -63,7 +63,8 @@ class ProjectSettingPage(QWidget):
         self.defult_path = folder_path
         self.label_project_path.setText(folder_path)
         self.data["project_path"] = folder_path
-        self.set_project_signal.emit(folder_path)
+
+        self.ui.parameter_setting_page.set_project()
 
     def select_exe(self):
         filename, filetype = QFileDialog.getOpenFileName(self,"選擇ParameterParser",self.defult_path) # start path

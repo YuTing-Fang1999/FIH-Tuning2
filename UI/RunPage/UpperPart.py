@@ -62,7 +62,7 @@ class UpperPart(QWidget):
 
     def setup_controller(self):
         self.btn_run.clicked.connect(self.run)
-        # self.btn_param_window.clicked.connect(self.show_param_window)
+        self.btn_param_window.clicked.connect(self.show_param_window)
 
     def set_score(self, score):
         self.label_score.setText(score)
@@ -109,6 +109,9 @@ class UpperPart(QWidget):
         self.tuning.is_run = False
         self.btn_run.setText('Run')
         self.mytimer.stopTimer()
+
+    def show_param_window(self):
+        self.ui.param_window.showNormal()
 
 def _async_raise(tid, exctype):
     """raises the exception, performs cleanup if needed"""

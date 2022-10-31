@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import (
-    QWidget, QGridLayout, QHBoxLayout,
-    QPushButton, QLabel, QLineEdit, QFileDialog
+    QWidget, QGridLayout, QHBoxLayout, QVBoxLayout, QGroupBox, QFormLayout,
+    QPushButton, QLabel, QLineEdit, QFileDialog, QSizePolicy, QSpacerItem
 )
 from PyQt5.QtCore import Qt, pyqtSignal
+from .PlatformSelecter import PlatformSelecter
 
 class ProjectSettingPage(QWidget):
     set_project_signal = pyqtSignal(str)
@@ -10,33 +11,20 @@ class ProjectSettingPage(QWidget):
     def __init__(self, ui):
         super().__init__()
         self.defult_path = "./" 
+        self.row=0
         self.ui = ui
         self.setup_UI()
         self.setup_controller()
 
     def setup_UI(self):
-        gridLayout = QGridLayout(self)
+        Spacer = QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.createForm()
 
-        self.btn_select_project = QPushButton("選擇project")
-        self.btn_select_project.setToolTip("選擇tuning project folder")
-        gridLayout.addWidget(self.btn_select_project, 0, 0)
-
-        self.label_project_path = QLabel("")
-        gridLayout.addWidget(self.label_project_path, 0, 1)
-
-        self.btn_select_exe = QPushButton("選擇ParameterParser")
-        self.btn_select_exe.setToolTip("選擇ParameterParser.exe")
-        gridLayout.addWidget(self.btn_select_exe, 1, 0)
-
-        self.label_exe_path = QLabel("")
-        gridLayout.addWidget(self.label_exe_path, 1, 1)
-
-        label = QLabel("bin檔名稱")
-        label.setToolTip("將project編譯過後的bin檔名")
-        gridLayout.addWidget(label, 2, 0)
-
-        self.lineEdits_bin_name = QLineEdit("")
-        gridLayout.addWidget(self.lineEdits_bin_name, 2, 1)
+        HLayout = QHBoxLayout(self)
+        HLayout.addSpacerItem(Spacer)
+        HLayout.addLayout(self.gridLayout)
+        HLayout.addSpacerItem(Spacer)
+        HLayout.setAlignment(Qt.AlignCenter)
 
         # Set Style
         self.setStyleSheet("QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"
@@ -44,8 +32,38 @@ class ProjectSettingPage(QWidget):
                            "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")
 
 
+    def createForm(self):
+        self.gridLayout = QGridLayout()
+
+        self.btn_select_project = QPushButton("選擇project")
+        self.btn_select_project.setToolTip("選擇tuning project folder")
+        self.label_project_path = QLabel("")
+        
+        self.btn_select_exe = QPushButton("選擇ParameterParser")
+        self.btn_select_exe.setToolTip("選擇ParameterParser.exe")
+        self.label_exe_path = QLabel("")
+
+        label_bin_name = QLabel("bin檔名稱")
+        label_bin_name.setToolTip("將project編譯過後的bin檔名")
+        self.lineEdits_bin_name = QLineEdit("")
+
+        label_platfoem = QLabel("平台選擇")
+        label_platfoem.adjustSize()
+        self.platform_selecter = PlatformSelecter(self.ui)
+
+        self.addRow(label_platfoem, self.platform_selecter)
+        self.addRow(self.btn_select_project, self.label_project_path)
+        self.addRow(self.btn_select_exe, self.label_exe_path)
+        self.addRow(label_bin_name, self.lineEdits_bin_name)
+
+    def addRow(self, w1, w2):
+        self.gridLayout.addWidget(w1, self.row, 0, 1, 1)
+        self.gridLayout.addWidget(w2, self.row, 1, 1, 1)
+        self.row+=1
+
     def update_UI(self):
         self.data = self.ui.data
+        self.platform_selecter.update_UI()
         if "project_path" in self.data:
             self.label_project_path.setText(self.data["project_path"])
         if "exe_path" in self.data:

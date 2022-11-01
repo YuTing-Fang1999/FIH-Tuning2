@@ -1,9 +1,12 @@
+from tkinter.messagebox import NO
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFileDialog
 import cv2
 import numpy as np
+
+from myPackage.Tuning.ImageMeasurement import *
 
 
 class ROI_coordinate(object):
@@ -36,6 +39,8 @@ class ImageViewer(QtWidgets.QGraphicsView):
         self.end_pos = None
         self.scenePos1 = None
         self.scenePos2 = None
+
+        self.img = None
 
 
     def hasPhoto(self):
@@ -131,15 +136,19 @@ class ImageViewer(QtWidgets.QGraphicsView):
         self.setPhoto(QPixmap(qimg))
 
 
-class ROI_Select_Window(QtWidgets.QWidget):
-    to_main_window_signal = pyqtSignal(int, np.ndarray, ROI_coordinate, str)
+class MeasureTargetWindow(QtWidgets.QWidget):
+    to_main_window_signal = pyqtSignal(int, float)
 
     def __init__(self):
-        super(ROI_Select_Window, self).__init__()
+        super().__init__()
         self.filefolder = "./"
         self.tab_idx = -1
         self.filename = ""
-        self.target_img_path=""
+
+        self.calFunc = {}
+        self.calFunc["sharpness"] = get_sharpness
+        self.calFunc["chroma stdev"] = get_chroma_stdev
+        self.calFunc["luma stdev"] = get_luma_stdev
 
         # Widgets
         self.viewer = ImageViewer(self)
@@ -172,9 +181,9 @@ class ROI_Select_Window(QtWidgets.QWidget):
         if event.key() == Qt.Key_Control:
             self.viewer.setDragMode(self.viewer.RubberBandDrag)
 
-    def open_img(self, img_idx):
+    def open_img(self):
         filepath, filetype = QFileDialog.getOpenFileName(self,
-                                                         "Open file",
+                                                         "選擇target照片",
                                                          self.filefolder,  # start path
                                                          'Image Files(*.png *.jpg *.jpeg *.bmp)')
 
@@ -188,12 +197,17 @@ class ROI_Select_Window(QtWidgets.QWidget):
         
         # load img
         img = cv2.imdecode(np.fromfile(file=filepath, dtype=np.uint8), cv2.IMREAD_COLOR)
-        self.set_img(img, img_idx)
+        self.set_img(img)
 
         # self.show()
 
-    def select_ROI(self, img_idx):
+    def measure_target(self, img_idx, target_type, origin_pos, end_pos):
         self.tab_idx = img_idx
+        self.target_type = target_type
+        self.origin_pos = origin_pos
+        self.end_pos = end_pos
+        
+        if self.viewer.img==None: self.open_img()
         self.viewer.set_ROI_draw()
         self.showMaximized()
 
@@ -249,13 +263,16 @@ class ROI_Select_Window(QtWidgets.QWidget):
             roi_coordinate.c2 = c2
             # print(c1, r1, c2, r2)
 
+            ROI_img = self.viewer.img[r1:r2][c1:c2]
+            score = self.calFunc[self.target_type](ROI_img)
+
         self.close()
-        self.to_main_window_signal.emit(self.tab_idx, img, roi_coordinate, self.filename)
+        self.to_main_window_signal.emit(self.tab_idx, score)
         
 
 if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    window = ROI_Select_Window()
+    window = MeasureTargetWindow()
     window.open_img(0)
     sys.exit(app.exec_())

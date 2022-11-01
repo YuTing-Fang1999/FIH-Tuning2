@@ -4,34 +4,13 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFileDialog
 import cv2
 import numpy as np
+
+from UI.ROI_Setting.ROI_Info import ROI_Info
 from .ImageViewer import ImageViewer
 from .ROI_SelectWindow import ROI_Select_Window
+from .MeasureTargetWindow import MeasureTargetWindow
 import os
 import random
-
-class Select_Btn(QtWidgets.QPushButton):
-    def __init__(self, idx, w) -> None:
-        super().__init__()
-        self.idx = idx
-        self.setText("選擇ROI")
-        self.clicked.connect(lambda: w.select_ROI(self.idx))
-
-class Score_type_selector(QtWidgets.QComboBox):
-    def __init__(self):
-        super(Score_type_selector, self).__init__()
-
-        self.addItems(['sharpness', 'chroma stdev', 'luma stdev'])
-        self.type='sharpness'
-
-        #Create widget
-        self.setStyleSheet("background-color: rgb(255, 255, 255); font-size:12pt; font-family:微軟正黑體;")
-
-        self.currentIndexChanged[str].connect(self.set_type)
-
-    def set_type(self,type):
-        self.type=type
-        # print(self.type)
-
 
 class ROI_SettingPage(QtWidgets.QWidget):
     to_setting_signal = pyqtSignal(list, list, list)
@@ -40,9 +19,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
         super().__init__()
         self.ui = ui
         self.idx=0
-        self.target_score=[]
-        self.target_weight=[]
-        self.type_selector=[]
+        self.roi_info = []
 
         self.setup_UI()
         self.setup_controller()
@@ -53,6 +30,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
         self.label_img.setAlignment(QtCore.Qt.AlignCenter)
         self.label_img.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.ROI_select_window = ROI_Select_Window()
+        self.measure_target_window = MeasureTargetWindow()
 
         # Arrange layout
         self.btn_capture = QtWidgets.QPushButton()
@@ -92,15 +70,18 @@ class ROI_SettingPage(QtWidgets.QWidget):
 
     def setup_controller(self):
         self.ROI_select_window.to_main_window_signal.connect(self.set_roi_coordinate)
+        self.measure_target_window.to_main_window_signal.connect(self.set_target_score)
         self.btn_add_ROI_item.clicked.connect(self.add_ROI_item_click)
         self.btn_capture.clicked.connect(self.do_capture)
         
     def set_roi_coordinate(self, img_idx, img, roi_coordinate, filename):
         # print(roi_coordinate)
-        self.add_ROI_item()
         x, y, w, h = roi_coordinate.c1, roi_coordinate.r1, (roi_coordinate.c2-roi_coordinate.c1), (roi_coordinate.r2-roi_coordinate.r1)
         self.data["roi"][img_idx-1]=[x, y, w, h]
         self.draw_ROI()
+
+    def set_target_score(self, img_idx, score):
+        self.target_score[img_idx-1].setText(str(score))
         
 
     def draw_ROI(self):
@@ -136,29 +117,21 @@ class ROI_SettingPage(QtWidgets.QWidget):
         label.setText(str(self.idx))
         self.GLayout.addWidget(label, self.idx, 0)
 
-        #Create widget
-        type_selector = Score_type_selector()
+        roi_info = ROI_Info(self.idx, self.ROI_select_window, self.measure_target_window)
 
-        lineEdit_score = QtWidgets.QLineEdit()
-        lineEdit_score.setText("0")
+        self.GLayout.addWidget(roi_info.type_selector,self.idx,1)
+        self.GLayout.addWidget(roi_info.target_score,self.idx,2)
+        self.GLayout.addWidget(roi_info.target_weight,self.idx,3)
+        self.GLayout.addWidget(roi_info.btn_selectROI,self.idx,4)
+        self.GLayout.addWidget(roi_info.btn_measure,self.idx,5)
 
-        lineEdit_weight = QtWidgets.QLineEdit()
-        lineEdit_weight.setText("1")
-
-        btn_selectROI = Select_Btn(self.idx, self.ROI_select_window)
-
-        self.GLayout.addWidget(type_selector,self.idx,1)
-        self.GLayout.addWidget(lineEdit_score,self.idx,2)
-        self.GLayout.addWidget(lineEdit_weight,self.idx,3)
-        self.GLayout.addWidget(btn_selectROI,self.idx,4)
+        self.roi_info.append(roi_info)
 
         if len(self.data["roi"]) < self.idx:
             self.data["roi"].append([])
-        self.target_score.append(lineEdit_score)
-        self.target_weight.append(lineEdit_weight)
-        self.type_selector.append(type_selector)
 
     def add_ROI_item_click(self):
+        self.add_ROI_item()
         self.ROI_select_window.select_ROI(self.idx)
 
 
@@ -190,9 +163,9 @@ class ROI_SettingPage(QtWidgets.QWidget):
 
         for i, roi in enumerate(self.data["roi"]):
             if len(roi)==0: continue
-            self.data["target_type"].append(self.type_selector[i].type)
-            self.data["target_score"].append(float(self.target_score[i].text()))
-            self.data["target_weight"].append(float(self.target_weight[i].text()))
+            self.data["target_type"].append(self.roi_info[i].type_selector.type)
+            self.data["target_score"].append(float(self.roi_info[i].target_score.text()))
+            self.data["target_weight"].append(float(self.roi_info[i].target_weight.text()))
 
     def update_UI(self):
         self.data = self.ui.data
@@ -204,9 +177,9 @@ class ROI_SettingPage(QtWidgets.QWidget):
         if 'target_type' in self.data and len(self.data["target_type"])>0:
             for i in range(len(self.data["target_type"])):
                 self.add_ROI_item()
-                self.type_selector[i].setCurrentText(self.data["target_type"][i])
-                self.target_score[i].setText(str(self.data["target_score"][i]))
-                self.target_weight[i].setText(str(self.data["target_weight"][i]))
+                self.roi_info[i].type_selector.setCurrentText(self.data["target_type"][i])
+                self.roi_info[i].target_score.setText(str(self.data["target_score"][i]))
+                self.roi_info[i].target_weight.setText(str(self.data["target_weight"][i]))
 
 if __name__ == '__main__':
     import sys

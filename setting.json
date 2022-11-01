@@ -3,11 +3,25 @@
     "page_key": "WNR",
     "roi": [
         [
-            1738,
-            1377,
-            290,
-            280
-        ]
+            427,
+            1292,
+            91,
+            66
+        ],
+        [
+            1947,
+            1258,
+            280,
+            285
+        ],
+        [
+            427,
+            1292,
+            91,
+            66
+        ],
+        [],
+        []
     ],
     "OPE": {
         "WNR": {
@@ -270,12 +284,18 @@
     "exe_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/ParameterParser.exe",
     "bin_name": "com.qti.tuned.shinetech_s53l6.bin",
     "target_type": [
-        "sharpness"
+        "sharpness",
+        "luma stdev",
+        "chroma stdev"
     ],
     "target_score": [
-        0.0
+        16.80882,
+        1.22084,
+        4.34994
     ],
     "target_weight": [
+        1.0,
+        1.0,
         1.0
     ],
     "population size": 10,

@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.capture = Capture()
         self.tuning = Tuning(self.run_page.lower_part, self.data, self.config, self.capture)
         self.update_UI()
-        # self.setup_controller()
+        self.setup_controller()
         
     def setup_UI(self):
         self.setWindowTitle("FIH-Tuning")
@@ -77,6 +77,7 @@ class MainWindow(QMainWindow):
     def setup_controller(self):
         self.capture.capture_fail_signal.connect(self.capture_fail)
         self.setting.alert_info_signal.connect(self.alert_info)
+        self.ROI_setting_page.alert_info_signal.connect(self.alert_info)
         # tuning to UI
         self.tuning.finish_signal.connect(self.run_page.upper_part.finish)
         self.tuning.set_score_signal.connect(self.run_page.upper_part.set_score)
@@ -99,6 +100,7 @@ class MainWindow(QMainWindow):
         self.tab3.upper_part.mytimer.continueTimer()
 
     def alert_info(self, title, text):
+        print(title)
         QMessageBox.about(self, title, text)
 
     def set_statusbar(self, text):

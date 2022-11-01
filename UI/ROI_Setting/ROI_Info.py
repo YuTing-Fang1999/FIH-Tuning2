@@ -40,14 +40,10 @@ class ROI_Info(QWidget):
         self.btn_selectROI.clicked.connect(self.btn_selectROI_click)
         self.btn_measure.clicked.connect(self.btn_measure_click)
 
-    def set_pos(self, origin_pos, end_pos):
-        self.origin_pos = origin_pos
-        self.end_pos = end_pos
-
     def btn_selectROI_click(self):
          self.w1.select_ROI(self.idx)
 
     def btn_measure_click(self):
-         self.w2.measure_target(self.idx, self.type_selector.type, self.origin_pos, self.end_pos)
+         self.w2.measure_target(self.idx, self.type_selector.type)
 
     

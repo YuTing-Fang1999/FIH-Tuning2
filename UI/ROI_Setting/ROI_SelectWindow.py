@@ -37,6 +37,8 @@ class ImageViewer(QtWidgets.QGraphicsView):
         self.scenePos1 = None
         self.scenePos2 = None
 
+        self.img = []
+
 
     def hasPhoto(self):
         return not self._empty

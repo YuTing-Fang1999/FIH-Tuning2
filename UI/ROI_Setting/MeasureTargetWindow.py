@@ -7,8 +7,7 @@ import cv2
 import numpy as np
 
 from myPackage.Tuning.ImageMeasurement import *
-
-
+from .ImageViewer import ImageViewer as DisplayImage
 class ROI_coordinate(object):
     r1 = -1
     r2 = -1
@@ -40,7 +39,7 @@ class ImageViewer(QtWidgets.QGraphicsView):
         self.scenePos1 = None
         self.scenePos2 = None
 
-        self.img = None
+        self.img = []
 
 
     def hasPhoto(self):
@@ -151,6 +150,7 @@ class MeasureTargetWindow(QtWidgets.QWidget):
         self.calFunc["luma stdev"] = get_luma_stdev
 
         # Widgets
+        self.display = DisplayImage(self)
         self.viewer = ImageViewer(self)
         self.label = QtWidgets.QLabel(self)
         self.label.setAlignment(Qt.AlignCenter)
@@ -159,8 +159,13 @@ class MeasureTargetWindow(QtWidgets.QWidget):
         self.btn_OK.setText("OK")
         # Arrange layout
         VBlayout = QtWidgets.QVBoxLayout(self)
+        HBlayout = QtWidgets.QHBoxLayout()
+
+        HBlayout.addWidget(self.display)
+        HBlayout.addWidget(self.viewer)
+
         VBlayout.addWidget(self.label)
-        VBlayout.addWidget(self.viewer)
+        VBlayout.addLayout(HBlayout)
         VBlayout.addWidget(self.btn_OK)
 
         # # 接受信號後要連接到什麼函數(將值傳到什麼函數)
@@ -201,13 +206,11 @@ class MeasureTargetWindow(QtWidgets.QWidget):
 
         # self.show()
 
-    def measure_target(self, img_idx, target_type, origin_pos, end_pos):
+    def measure_target(self, img_idx, target_type):
         self.tab_idx = img_idx
         self.target_type = target_type
-        self.origin_pos = origin_pos
-        self.end_pos = end_pos
         
-        if self.viewer.img==None: self.open_img()
+        if len(self.viewer.img)==0: self.open_img()
         self.viewer.set_ROI_draw()
         self.showMaximized()
 
@@ -227,14 +230,14 @@ class MeasureTargetWindow(QtWidgets.QWidget):
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
 
-        roi_coordinate = ROI_coordinate()
+        roi_coor = ROI_coordinate()
 
         if self.viewer.scenePos1 == None:
 
-            roi_coordinate.r1 = 0
-            roi_coordinate.c1 = 0
-            roi_coordinate.r2 = img.shape[0]
-            roi_coordinate.c2 = img.shape[1]
+            roi_coor.r1 = 0
+            roi_coor.c1 = 0
+            roi_coor.r2 = img.shape[0]
+            roi_coor.c2 = img.shape[1]
 
         else:
 
@@ -257,17 +260,18 @@ class MeasureTargetWindow(QtWidgets.QWidget):
                 r2 = img.shape[0]
                 c2 = img.shape[1]
 
-            roi_coordinate.r1 = r1
-            roi_coordinate.c1 = c1
-            roi_coordinate.r2 = r2
-            roi_coordinate.c2 = c2
-            # print(c1, r1, c2, r2)
+            roi_coor.r1 = r1
+            roi_coor.c1 = c1
+            roi_coor.r2 = r2
+            roi_coor.c2 = c2
 
-            ROI_img = self.viewer.img[r1:r2][c1:c2]
-            score = self.calFunc[self.target_type](ROI_img)
+        print(roi_coor.r1, roi_coor.r2, roi_coor.c1, roi_coor.c2)
+        ROI_img = img[roi_coor.r1:roi_coor.r2, roi_coor.c1:roi_coor.c2]
+        print(ROI_img.shape)
+        score = self.calFunc[self.target_type](ROI_img)
 
         self.close()
-        self.to_main_window_signal.emit(self.tab_idx, score)
+        self.to_main_window_signal.emit(self.tab_idx, np.around(score,5))
         
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@ import random
 
 class ROI_SettingPage(QtWidgets.QWidget):
     to_setting_signal = pyqtSignal(list, list, list)
+    alert_info_signal = pyqtSignal(str, str)
 
     def __init__(self, ui):
         super().__init__()
@@ -66,7 +67,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
             "QWidget{background-color: rgb(66, 66, 66);}"
             "QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"
             "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
-            "QLineEdit{background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")
+            "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")
 
     def setup_controller(self):
         self.ROI_select_window.to_main_window_signal.connect(self.set_roi_coordinate)
@@ -75,13 +76,14 @@ class ROI_SettingPage(QtWidgets.QWidget):
         self.btn_capture.clicked.connect(self.do_capture)
         
     def set_roi_coordinate(self, img_idx, img, roi_coordinate, filename):
+        self.add_ROI_item()
         # print(roi_coordinate)
         x, y, w, h = roi_coordinate.c1, roi_coordinate.r1, (roi_coordinate.c2-roi_coordinate.c1), (roi_coordinate.r2-roi_coordinate.r1)
         self.data["roi"][img_idx-1]=[x, y, w, h]
         self.draw_ROI()
 
     def set_target_score(self, img_idx, score):
-        self.target_score[img_idx-1].setText(str(score))
+        self.roi_info[img_idx-1].target_score.setText(str(score))
         
 
     def draw_ROI(self):
@@ -94,12 +96,12 @@ class ROI_SettingPage(QtWidgets.QWidget):
                 x, y, w, h = roi
                 # 隨機產生顏色
                 color = [random.randint(0, 255), random.randint(0, 255),random.randint(0, 255)]
-                thickness = 10 # 寬度 (-1 表示填滿)
-                cv2.rectangle(img_select, (x, y), (x+w, y+h), color, thickness)
-                cv2.putText(img_select, text=str(i+1), org=(x+w//2, y+h//2), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=min(w//50,h//50), color=color, thickness=thickness)
+                cv2.rectangle(img_select, (x, y), (x+w, y+h), color, 3)
+                cv2.putText(img_select, text=str(i+1), org=(x+w//2, y+h//2), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=min(w//50,h//50), color=color, thickness=min(w//500,h//500)+1)
 
             self.label_img.setPhoto(img_select)
             self.ROI_select_window.set_img(img_select)
+            self.measure_target_window.display.setPhoto(img_select)
         else: self.data["roi"] = []
 
 
@@ -131,8 +133,10 @@ class ROI_SettingPage(QtWidgets.QWidget):
             self.data["roi"].append([])
 
     def add_ROI_item_click(self):
-        self.add_ROI_item()
-        self.ROI_select_window.select_ROI(self.idx)
+        if os.path.exists("capture.jpg"):
+            self.ROI_select_window.select_ROI(self.idx)
+        else:
+            self.alert_info_signal.emit("未拍攝照片", "請先固定好拍攝位置，再按拍攝鈕拍攝拍攝照片")
 
 
     def do_capture(self):

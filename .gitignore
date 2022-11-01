@@ -7,5 +7,5 @@ best
 target
 *.bin
 *.pptx
-setting.pkl
+setting.json
 gain*

@@ -12,7 +12,6 @@ from .ISP_Tree import ISP_Tree
 
 import os
 import xml.etree.ElementTree as ET
-import json
 
 class ParameterSettingPage(QWidget):
     def __init__(self, ui):
@@ -151,7 +150,7 @@ class ParameterSettingPage(QWidget):
             aec_trigger_datas.append(data)
 
         self.trigger_selector.update_UI(aec_trigger_datas)
-        self.set_trigger_idx(0)
+        self.trigger_selector.set_trigger_idx(0)
 
     
     

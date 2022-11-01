@@ -3,25 +3,11 @@
     "page_key": "WNR",
     "roi": [
         [
-            427,
-            1292,
-            91,
-            66
-        ],
-        [
-            1947,
-            1258,
-            280,
-            285
-        ],
-        [
-            427,
-            1292,
-            91,
-            66
-        ],
-        [],
-        []
+            1961,
+            1277,
+            238,
+            252
+        ]
     ],
     "OPE": {
         "WNR": {
@@ -77,66 +63,78 @@
                 ]
             ],
             "param_value": [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
+                2.0,
+                2.0,
+                2.0,
+                1.477716,
+                1.156105,
+                1.354341,
+                2.055433,
+                0.861184,
+                0.909376,
+                1.294546,
+                2.062286,
+                9.0,
+                8.0,
+                5.0,
+                10.0,
+                10.0,
+                8.0,
+                8.0,
+                4.0,
+                1.4,
+                2.0,
+                12.0,
+                10.0,
+                8.0,
+                8.0,
+                1.0,
+                1.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
             ],
-            "coustom_range": [],
+            "coustom_range": [
+                [
+                    0,
+                    255
+                ],
+                [
+                    0,
+                    255
+                ],
+                [
+                    0,
+                    255
+                ],
+                [
+                    0,
+                    65535
+                ],
+                [
+                    0,
+                    65535
+                ],
+                [
+                    0,
+                    65535
+                ],
+                [
+                    0,
+                    65535
+                ],
+                [
+                    0,
+                    1
+                ],
+                [
+                    0,
+                    1
+                ]
+            ],
             "param_change_idx": [
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16,
-                17,
-                18,
-                19,
-                20,
-                21,
-                22,
-                23,
-                24,
                 25,
                 26,
                 27,
@@ -277,31 +275,22 @@
             ]
         }
     },
-    "project_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project",
+    "project_path": "D:/github/FIH/s5k3l6_c7project",
     "project_name": "s5k3l6_c7project",
-    "tuning_dir": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning",
-    "xml_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project/Scenario.Default/XML/",
-    "exe_path": "C:/Users/s830s/OneDrive/\u6587\u4ef6/github/FIH/Tuning/oem/qcom/tuning/ParameterParser.exe",
-    "bin_name": "com.qti.tuned.shinetech_s53l6.bin",
+    "tuning_dir": "D:/github/FIH",
+    "xml_path": "D:/github/FIH/s5k3l6_c7project/Scenario.Default/XML/",
+    "exe_path": "",
+    "bin_name": "",
     "target_type": [
-        "sharpness",
-        "luma stdev",
-        "chroma stdev"
+        "sharpness"
     ],
     "target_score": [
-        16.80882,
-        1.22084,
-        4.34994
+        0.0
     ],
     "target_weight": [
-        1.0,
-        1.0,
         1.0
     ],
     "population size": 10,
     "generations": 40,
-    "capture num": 1,
-    "saved_dir_name": "123555",
-    "saved_img_name": "123",
-    "platform": "c7project"
+    "capture num": 1
 }

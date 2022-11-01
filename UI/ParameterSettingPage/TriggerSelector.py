@@ -1,4 +1,6 @@
 from PyQt5.QtWidgets import QComboBox
+import xml.etree.ElementTree as ET
+import json
 
 class TriggerSelector(QComboBox):
     def __init__(self, ui):
@@ -10,7 +12,9 @@ class TriggerSelector(QComboBox):
         self.setStyleSheet("font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255);")
 
     def update_UI(self, aec_trigger_datas):
+        self.parameter_setting_page = self.ui.parameter_setting_page
         self.data = self.ui.data
+        self.config = self.ui.config
         item_names = ["lux_idx from {} to {},  gain from {} to {}".format(d[0], d[1], d[2], d[3])for d in aec_trigger_datas]
         self.clear()
         self.addItems(item_names)
@@ -58,5 +62,5 @@ class TriggerSelector(QComboBox):
         # converting 2d list into 1d
         block_data['param_value'] = sum(block_data['param_value'], [])
 
-        self.param_modify_block.update_param_value_UI(block_data['param_value'])
-        self.param_range_block.update_defult_range_UI(block_data['defult_range'])
+        self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
+        self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])

@@ -47,7 +47,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
     def run(self):
         ##### param setting #####
-        print('self.TEST_MODE =',self.TEST_MODE)
+        print('self.TEST_MODE =', self.TEST_MODE)
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         

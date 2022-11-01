@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
+    QWidget, QGridLayout, QHBoxLayout, QVBoxLayout, QCheckBox,
     QPushButton, QLabel
 )
 
@@ -19,46 +19,73 @@ class UpperPart(QWidget):
         self.setup_controller()
 
     def setup_UI(self):
-        horizontalLayout = QHBoxLayout(self)
+        HLayout = QHBoxLayout(self)
 
         self.btn_run = QPushButton("Run")
         self.btn_run.setStyleSheet("font-family:Agency FB; font-size:30pt; width: 100%; height: 100%;")
-        horizontalLayout.addWidget(self.btn_run)
+        HLayout.addWidget(self.btn_run)
 
         self.btn_param_window = QPushButton("Param")
         self.btn_param_window.setStyleSheet("font-family:Agency FB; font-size:30pt; width: 100%; height: 100%;")
-        horizontalLayout.addWidget(self.btn_param_window)
+        HLayout.addWidget(self.btn_param_window)
+
+        ##############
+
+        GLayout_ML = QGridLayout()
+
+        self.test_mode = QCheckBox()
+        GLayout_ML.addWidget(self.test_mode, 0, 0, 1, 1, Qt.AlignRight)
+        GLayout_ML.addWidget(QLabel("TEST_MODE"), 0, 1, 1, 1)
+
+        self.pretrain = QCheckBox()
+        GLayout_ML.addWidget(self.pretrain, 1, 0, 1, 1, Qt.AlignRight)
+        GLayout_ML.addWidget(QLabel("pretrain model"), 1, 1, 1, 1)
+
+        self.train = QCheckBox()
+        GLayout_ML.addWidget(self.train, 2, 0, 1, 1, Qt.AlignRight)
+        GLayout_ML.addWidget(QLabel("training"), 2, 1, 1, 1)
+
+        HLayout.addLayout(GLayout_ML)
+
+        ##############
 
         label = QLabel("總分")
         label.setAlignment(Qt.AlignRight | Qt.AlignTrailing | Qt.AlignVCenter)
-        horizontalLayout.addWidget(label)
+        HLayout.addWidget(label)
 
         self.label_score = QLabel("#")
-        horizontalLayout.addWidget(self.label_score)
+        HLayout.addWidget(self.label_score)
 
-        gridLayout_gen = QGridLayout()
+        ##############
+
+        GLayout_gen = QGridLayout()
 
         label = QLabel("generation:")
-        gridLayout_gen.addWidget(label, 0, 0, 1, 1)
+        GLayout_gen.addWidget(label, 0, 0, 1, 1)
 
         label = QLabel("individual:")
-        gridLayout_gen.addWidget(label, 1, 0, 1, 1)
+        GLayout_gen.addWidget(label, 1, 0, 1, 1)
 
         self.label_generation = QLabel("#")
-        gridLayout_gen.addWidget(self.label_generation, 0, 1, 1, 1)
+        GLayout_gen.addWidget(self.label_generation, 0, 1, 1, 1)
 
         self.label_individual = QLabel("#")
-        gridLayout_gen.addWidget(self.label_individual, 1, 1, 1, 1)
-        horizontalLayout.addLayout(gridLayout_gen)
+        GLayout_gen.addWidget(self.label_individual, 1, 1, 1, 1)
+        HLayout.addLayout(GLayout_gen)
 
         self.mytimer = MyTimer()
-        horizontalLayout.addWidget(self.mytimer)
+        HLayout.addWidget(self.mytimer)
 
     def update_UI(self):
         self.tuning = self.ui.tuning
         self.setting = self.ui.setting
         self.data = self.ui.data
         self.config = self.ui.config
+
+    def set_data(self):
+        self.tuning.TEST_MODE = self.test_mode.isChecked()
+        self.tuning.pretrain = self.pretrain.isChecked()
+        self.tuning.train = self.train.isChecked()
 
     def setup_controller(self):
         self.btn_run.clicked.connect(self.run)

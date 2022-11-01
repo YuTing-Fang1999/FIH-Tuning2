@@ -35,6 +35,8 @@ class Setting(QWidget):
             self.alert_info_signal.emit("參數未填完", "超參數部分的參數未填完")
             return False
 
+        self.ui.run_page.upper_part.set_data()
+
         return True
 
     def read_setting(self):

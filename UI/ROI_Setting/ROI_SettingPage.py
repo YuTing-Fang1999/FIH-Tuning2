@@ -90,8 +90,6 @@ class ROI_SettingPage(QtWidgets.QWidget):
             "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
             "QLineEdit{background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")
 
-        self.setup_controller()
-
     def setup_controller(self):
         self.ROI_select_window.to_main_window_signal.connect(self.set_roi_coordinate)
         self.btn_add_ROI_item.clicked.connect(self.add_ROI_item_click)
@@ -99,6 +97,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
         
     def set_roi_coordinate(self, img_idx, img, roi_coordinate, filename):
         # print(roi_coordinate)
+        self.add_ROI_item()
         x, y, w, h = roi_coordinate.c1, roi_coordinate.r1, (roi_coordinate.c2-roi_coordinate.c1), (roi_coordinate.r2-roi_coordinate.r1)
         self.data["roi"][img_idx-1]=[x, y, w, h]
         self.draw_ROI()
@@ -153,14 +152,13 @@ class ROI_SettingPage(QtWidgets.QWidget):
         self.GLayout.addWidget(lineEdit_weight,self.idx,3)
         self.GLayout.addWidget(btn_selectROI,self.idx,4)
 
-        if len(self.data["roi"]) <= self.idx:
+        if len(self.data["roi"]) < self.idx:
             self.data["roi"].append([])
         self.target_score.append(lineEdit_score)
         self.target_weight.append(lineEdit_weight)
         self.type_selector.append(type_selector)
 
     def add_ROI_item_click(self):
-        self.add_ROI_item()
         self.ROI_select_window.select_ROI(self.idx)
 
 

@@ -7,8 +7,7 @@ import numpy as np
 
 from UI.ROI_Setting.ROI_Info import ROI_Info
 from .ImageViewer import ImageViewer
-from .ROI_SelectWindow import ROI_Select_Window
-from .MeasureTargetWindow import MeasureTargetWindow
+from .ROI_Select_Window import ROI_Select_Window
 import os
 import random
 
@@ -31,7 +30,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
         self.label_img.setAlignment(QtCore.Qt.AlignCenter)
         self.label_img.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.ROI_select_window = ROI_Select_Window()
-        self.measure_target_window = MeasureTargetWindow()
+        self.measure_target_window = ROI_Select_Window()
 
         # Arrange layout
         self.btn_capture = QtWidgets.QPushButton()
@@ -101,7 +100,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
 
             self.label_img.setPhoto(img_select)
             self.ROI_select_window.set_img(img_select)
-            self.measure_target_window.display.setPhoto(img_select)
+            self.measure_target_window.my_viewer.set_img(img_select)
         else: self.data["roi"] = []
 
 

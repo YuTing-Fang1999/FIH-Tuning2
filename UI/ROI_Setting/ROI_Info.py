@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QPushButton, QWidget, QComboBox, QLineEdit
+from PyQt5.QtWidgets import QPushButton, QWidget, QComboBox, QLineEdit, QLabel
 
 class Score_type_selector(QComboBox):
     def __init__(self):
@@ -19,31 +19,33 @@ class Score_type_selector(QComboBox):
 
 class ROI_Info(QWidget):
 
-    def __init__(self, idx, w1, w2):
+    def __init__(self, table, region_id, idx, target_type, target_score, target_weight):
         super().__init__()
+        self.table = table
+        self.region_id = region_id
         self.idx = idx
-        self.w1=w1
-        self.w2=w2
+        self.target_type = target_type
+        self.score_value = target_score
+        self.target_weight = target_weight
 
         #Create widget
-        self.type_selector = Score_type_selector()
+        # self.type_selector = Score_type_selector()
+        self.type_selector = QLabel(target_type)
 
         self.target_score = QLineEdit()
-        self.target_score.setText("0")
+        self.target_score.setText(str(target_score))
 
         self.target_weight = QLineEdit()
-        self.target_weight.setText("1")
+        self.target_weight.setText(str(target_weight))
 
-        self.btn_selectROI = QPushButton("選擇ROI")
-        self.btn_measure = QPushButton("計算分數")
+        self.btn_delete = QPushButton("刪除")
+        self.btn_delete.clicked.connect(self.delete_row)
 
-        self.btn_selectROI.clicked.connect(self.btn_selectROI_click)
-        self.btn_measure.clicked.connect(self.btn_measure_click)
+    def delete_row(self):
+        print("delete row", self.idx)
+        self.table.removeRow(self.idx)
 
-    def btn_selectROI_click(self):
-         self.w1.select_ROI(self.idx)
 
-    def btn_measure_click(self):
-         self.w2.measure_target(self.idx, self.type_selector.type)
+
 
     

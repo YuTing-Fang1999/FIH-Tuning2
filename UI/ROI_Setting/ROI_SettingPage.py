@@ -1,17 +1,39 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import (
+    QWidget, QSpacerItem, QSizePolicy,
+    QVBoxLayout, QHBoxLayout, QFrame, QGridLayout,
+    QPushButton, QLabel, QApplication, QCheckBox, QTableWidget, QHeaderView,
+    QTableWidgetItem
+)    
 import cv2
 import numpy as np
+from copy import deepcopy
 
-from UI.ROI_Setting.ROI_Info import ROI_Info
-from .ImageViewer import ImageViewer
-from .ROI_Select_Window import ROI_Select_Window
+import sys
+sys.path.append(".")
+
+from ROI_Info import ROI_Info
+from ImageViewer import ImageViewer
+from ROI_Select_Window import ROI_Select_Window
+from MeasureWindow import MeasureWindow
 import os
 import random
 
-class ROI_SettingPage(QtWidgets.QWidget):
+class DeleteBtn(QPushButton):
+    def __init__(self, table):
+        super().__init__()
+        self.table = table
+        self.setText("刪除")
+        self.clicked.connect(self.deleteClicked)
+
+    def deleteClicked(self):
+        button = self.sender()
+        if button:
+            row = self.table.indexAt(button.pos()).row()
+            self.table.removeRow(row)
+            print("del row", row)
+
+class ROI_SettingPage(QWidget):
     to_setting_signal = pyqtSignal(list, list, list)
     alert_info_signal = pyqtSignal(str, str)
 
@@ -19,6 +41,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
         super().__init__()
         self.ui = ui
         self.idx=0
+        self.region_id=0
         self.roi_info = []
 
         self.setup_UI()
@@ -27,35 +50,44 @@ class ROI_SettingPage(QtWidgets.QWidget):
     def setup_UI(self):
         # Widgets
         self.label_img = ImageViewer()
-        self.label_img.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_img.setAlignment(Qt.AlignCenter)
         self.label_img.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.ROI_select_window = ROI_Select_Window()
-        self.measure_target_window = ROI_Select_Window()
+        self.measure_window = MeasureWindow()
 
-        # Arrange layout
-        self.btn_capture = QtWidgets.QPushButton()
+        self.table = QTableWidget()
+        self.headers = ["region id", "type", "score", "weight", "刪除紐"]
+        self.table.setColumnCount(len(self.headers))   ##设置列数
+        self.table.setHorizontalHeaderLabels(self.headers)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.verticalHeader().setVisible(False)
+        QTableWidget.resizeRowsToContents(self.table)
+
+
+        self.btn_capture = QPushButton()
         self.btn_capture.setText("拍攝照片")
         self.btn_capture.setToolTip("會拍攝一張照片，請耐心等候")
 
-        self.btn_add_ROI_item = QtWidgets.QPushButton()
+        self.btn_add_ROI_item = QPushButton()
         self.btn_add_ROI_item.setText("增加區域")
         self.btn_add_ROI_item.setToolTip("按下後會新增一個目標區域")
 
-        self.GLayout = QtWidgets.QGridLayout()
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.GLayout = QGridLayout()
+        spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # Arrange layout
-        HBlayout = QtWidgets.QHBoxLayout(self)
+        HBlayout = QHBoxLayout(self)
 
-        VBlayout = QtWidgets.QVBoxLayout()
+        VBlayout = QVBoxLayout()
         VBlayout.addWidget(self.label_img)
         VBlayout.addWidget(self.btn_capture)
         VBlayout.addWidget(self.btn_add_ROI_item)
         HBlayout.addLayout(VBlayout)
 
-        VBlayout = QtWidgets.QVBoxLayout()
-        VBlayout.addLayout(self.GLayout)
-        VBlayout.addItem(spacerItem)
+        VBlayout = QVBoxLayout()
+        # VBlayout.addLayout(self.GLayout)
+        VBlayout.addWidget(self.table)
+        # VBlayout.addItem(spacerItem)
         HBlayout.addLayout(VBlayout)
 
         HBlayout.setStretch(0,3)
@@ -69,22 +101,38 @@ class ROI_SettingPage(QtWidgets.QWidget):
             "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}")
 
     def setup_controller(self):
-        self.ROI_select_window.to_main_window_signal.connect(self.set_roi_coordinate)
-        self.measure_target_window.to_main_window_signal.connect(self.set_target_score)
-        self.btn_add_ROI_item.clicked.connect(self.add_ROI_item_click)
+        self.ROI_select_window.to_main_window_signal.connect(self.select_ROI)
+        self.measure_window.to_main_window_signal.connect(self.set_target_score)
+        self.btn_add_ROI_item.clicked.connect(self.add_to_table)
+        # self.btn_add_ROI_item.clicked.connect(self.add_ROI_item_click)
         self.btn_capture.clicked.connect(self.do_capture)
+    
         
-    def set_roi_coordinate(self, img_idx, img, roi_coordinate, filename):
-        self.add_ROI_item()
-        # print(roi_coordinate)
-        x, y, w, h = roi_coordinate.c1, roi_coordinate.r1, (roi_coordinate.c2-roi_coordinate.c1), (roi_coordinate.r2-roi_coordinate.r1)
-        self.data["roi"][img_idx-1]=[x, y, w, h]
-        self.draw_ROI()
+    def select_ROI(self, img_idx, my_x_y_w_h, target_roi_img):
+        self.measure_window.measure_target(img_idx, my_x_y_w_h, target_roi_img)
 
-    def set_target_score(self, img_idx, score):
-        self.roi_info[img_idx-1].target_score.setText(str(score))
+    def set_target_score(self, region_id, my_x_y_w_h, target_type, score_value):
+        for i in range(len(target_type)):
+            self.add_ROI_item(target_type[i], score_value[i], 1)
+            self.data["roi"].append(my_x_y_w_h)
+            self.draw_ROI()
+
+        self.region_id+=1
+
+    def add_to_table(self):
+        print("add_to_table")
+        roi_info = ROI_Info(self.table, self.region_id, self.idx, "target_type", 0, 1)
+
+        row = self.table.rowCount()
+        self.table.setRowCount(row + 1)
+        self.table.setCellWidget(row,0,QLabel(str(self.region_id)))
+        self.table.setCellWidget(row,1,roi_info.type_selector)
+        self.table.setCellWidget(row,2,roi_info.target_score)
+        self.table.setCellWidget(row,3,roi_info.target_weight)
+        self.table.setCellWidget(row,4,DeleteBtn(self.table))
+
+        self.idx += 1
         
-
     def draw_ROI(self):
         if 'roi' in self.data:
             img_select = self.img.copy()
@@ -99,38 +147,16 @@ class ROI_SettingPage(QtWidgets.QWidget):
                 cv2.putText(img_select, text=str(i+1), org=(x+w//2, y+h//2), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=min(w//50,h//50), color=color, thickness=min(w//500,h//500)+1)
 
             self.label_img.setPhoto(img_select)
-            self.ROI_select_window.set_img(img_select)
-            self.measure_target_window.my_viewer.set_img(img_select)
+            self.ROI_select_window.my_viewer.set_img(img_select)
         else: self.data["roi"] = []
 
 
     def add_title(self):
         name = ["idx", "type", "score", "weight"]
         for i in range(len(name)):
-            self.label = QtWidgets.QLabel()
-            self.label.setText(name[i])
-            self.GLayout.addWidget(self.label,0,i)
-
-    def add_ROI_item(self):
-        self.idx+=1
-
-        label = QtWidgets.QLabel()
-        label.setText(str(self.idx))
-        self.GLayout.addWidget(label, self.idx, 0)
-
-        roi_info = ROI_Info(self.idx, self.ROI_select_window, self.measure_target_window)
-
-        self.GLayout.addWidget(roi_info.type_selector,self.idx,1)
-        self.GLayout.addWidget(roi_info.target_score,self.idx,2)
-        self.GLayout.addWidget(roi_info.target_weight,self.idx,3)
-        self.GLayout.addWidget(roi_info.btn_selectROI,self.idx,4)
-        self.GLayout.addWidget(roi_info.btn_measure,self.idx,5)
-
-        self.roi_info.append(roi_info)
-
-        if len(self.data["roi"]) < self.idx:
-            self.data["roi"].append([])
-
+            label = QLabel(name[i])
+            self.GLayout.addWidget(label,0,i)
+    
     def add_ROI_item_click(self):
         if os.path.exists("capture.jpg"):
             self.ROI_select_window.select_ROI(self.idx)
@@ -156,7 +182,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
             img = cv2.imread(img_name)
             self.label_img.setPhoto(img)
             self.img = img
-            self.ROI_select_window.set_img(img)
+            self.ROI_select_window.my_viewer.set_img(img)
             self.draw_ROI()
 
     def set_data(self):
@@ -166,7 +192,7 @@ class ROI_SettingPage(QtWidgets.QWidget):
 
         for i, roi in enumerate(self.data["roi"]):
             if len(roi)==0: continue
-            self.data["target_type"].append(self.roi_info[i].type_selector.type)
+            self.data["target_type"].append(self.roi_info[i].target_type)
             self.data["target_score"].append(float(self.roi_info[i].target_score.text()))
             self.data["target_weight"].append(float(self.roi_info[i].target_weight.text()))
 
@@ -179,14 +205,14 @@ class ROI_SettingPage(QtWidgets.QWidget):
 
         if 'target_type' in self.data and len(self.data["target_type"])>0:
             for i in range(len(self.data["target_type"])):
-                self.add_ROI_item()
-                self.roi_info[i].type_selector.setCurrentText(self.data["target_type"][i])
-                self.roi_info[i].target_score.setText(str(self.data["target_score"][i]))
-                self.roi_info[i].target_weight.setText(str(self.data["target_weight"][i]))
+                self.add_ROI_item(self.data["target_type"][i], self.data["target_score"][i], self.data["target_weight"][i])
+                # self.roi_info[i].type_selector.setCurrentText(self.data["target_type"][i])
+                # self.roi_info[i].target_score.setText(str(self.data["target_score"][i]))
+                # self.roi_info[i].target_weight.setText(str(self.data["target_weight"][i]))
 
 if __name__ == '__main__':
     import sys
-    app = QtWidgets.QApplication(sys.argv)
-    window = ROI_SettingPage()
+    app = QApplication(sys.argv)
+    window = ROI_SettingPage(None)
     window.showMaximized()
     sys.exit(app.exec_()) 

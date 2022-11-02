@@ -1,12 +1,11 @@
 from tkinter.messagebox import NO
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint
-from PyQt5.QtGui import QImage, QPixmap, QCursor
+from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QFileDialog
 import cv2
 import numpy as np
 
-from myPackage.Tuning.ImageMeasurement import *
 
 class ROI_coordinate(object):
     r1 = -1
@@ -175,20 +174,54 @@ class ImageViewer(QtWidgets.QGraphicsView):
                         * img.shape[2], QImage.Format_RGB888).rgbSwapped()
         self.setPhoto(QPixmap(qimg))
 
+    def get_roi_coordinate(self):
+        
+        img = self.img
+        roi_coor = ROI_coordinate()
+
+        if self.scenePos1 == None:
+
+            roi_coor.r1 = 0
+            roi_coor.c1 = 0
+            roi_coor.r2 = img.shape[0]
+            roi_coor.c2 = img.shape[1]
+
+        else:
+
+            self.fitInView()
+            self.origin_pos = self.mapFromScene(self.scenePos1)
+            self.end_pos = self.mapFromScene(self.scenePos2)
+
+            # fitInView 要重新生座標才不會有誤差
+            self.scenePos1 = self.mapToScene(self.origin_pos).toPoint()
+            c1 = max(0, self.scenePos1.x())
+            r1 = max(0, self.scenePos1.y())
+
+            self.scenePos2 = self.mapToScene(self.end_pos).toPoint()
+            c2 = min(img.shape[1], self.scenePos2.x())
+            r2 = min(img.shape[0], self.scenePos2.y())
+
+            if r2-r1<2 or c2-c1<2:
+                r1 = 0
+                c1 = 0
+                r2 = img.shape[0]
+                c2 = img.shape[1]
+
+            roi_coor.r1 = r1
+            roi_coor.c1 = c1
+            roi_coor.r2 = r2
+            roi_coor.c2 = c2
+
+        return roi_coor
 
 class ROI_Select_Window(QtWidgets.QWidget):
-    to_main_window_signal = pyqtSignal(int, float)
+    to_main_window_signal = pyqtSignal(int, list, np.ndarray)
 
     def __init__(self):
         super().__init__()
         self.filefolder = "./"
         self.tab_idx = -1
         self.filename = ""
-
-        self.calFunc = {}
-        self.calFunc["sharpness"] = get_sharpness
-        self.calFunc["chroma stdev"] = get_chroma_stdev
-        self.calFunc["luma stdev"] = get_luma_stdev
 
         # Widgets
         self.my_viewer = ImageViewer(self, 0)
@@ -210,9 +243,7 @@ class ROI_Select_Window(QtWidgets.QWidget):
         VBlayout.addWidget(self.btn_OK)
 
         # # 接受信號後要連接到什麼函數(將值傳到什麼函數)
-        self.btn_OK.clicked.connect(
-            lambda: self.get_roi_coordinate(self.target_viewer.img)
-        )
+        self.btn_OK.clicked.connect(lambda: self.btn_ok_function())
 
         self.setStyleSheet(
             "QWidget{background-color: rgb(66, 66, 66);}"
@@ -230,91 +261,43 @@ class ROI_Select_Window(QtWidgets.QWidget):
             self.target_viewer.setDragMode(self.target_viewer.RubberBandDrag)
 
     def open_img(self):
-        filepath, filetype = QFileDialog.getOpenFileName(self,
-                                                         "選擇target照片",
-                                                         self.filefolder,  # start path
-                                                         'Image Files(*.png *.jpg *.jpeg *.bmp)')
+        filepath, filetype = QFileDialog.getOpenFileName(
+            self,
+            "選擇target照片",
+            self.filefolder,  # start path
+            'Image Files(*.png *.jpg *.jpeg *.bmp)'
+        )
 
-        if filepath == '':
-            return
+        if filepath == '': return
 
-        # filepath = '../test img/grid2.jpg'
         self.filefolder = '/'.join(filepath.split('/')[:-1])
         self.filename = filepath.split('/')[-1]
-
         
         # load img
         img = cv2.imdecode(np.fromfile(file=filepath, dtype=np.uint8), cv2.IMREAD_COLOR)
-        self.set_img(img)
+        self.target_viewer.set_img(img)
 
-        # self.show()
-
-    def measure_target(self, img_idx, target_type):
-        self.tab_idx = img_idx
-        self.target_type = target_type
+    def select_ROI(self, img_idx):
+        self.idx = img_idx
         
         if len(self.target_viewer.img)==0: self.open_img()
+        self.my_viewer.set_ROI_draw()
         self.target_viewer.set_ROI_draw()
         self.showMaximized()
+    
+    def roi_coor2x_y_w_h(self, roi_coor):
+        return [roi_coor.c1, roi_coor.r1, (roi_coor.c2-roi_coor.c1), (roi_coor.r2-roi_coor.r1)]
 
-    def set_img(self, img):
-        self.target_viewer.img = img
-        qimg = QImage(img, img.shape[1], img.shape[0], img.shape[1] * img.shape[2], QImage.Format_RGB888).rgbSwapped()
+    def btn_ok_function(self):
+        my_roi_coor = self.my_viewer.get_roi_coordinate()
+        target_roi_coor = self.target_viewer.get_roi_coordinate()
 
-        self.target_viewer.setPhoto(QPixmap(qimg))
-        self.target_viewer.fitInView()
-
-        # self.viewer.set_ROI_draw()
-        # self.showMaximized()
-
-    def get_roi_coordinate(self, img):
-        # roi_img = self.viewer.img[int(roi_coordinate.r1):int(roi_coordinate.r2), int(roi_coordinate.c1):int(roi_coordinate.c2)]
-        # cv2.imshow('roi_img', roi_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
-        roi_coor = ROI_coordinate()
-
-        if self.target_viewer.scenePos1 == None:
-
-            roi_coor.r1 = 0
-            roi_coor.c1 = 0
-            roi_coor.r2 = img.shape[0]
-            roi_coor.c2 = img.shape[1]
-
-        else:
-
-            self.target_viewer.fitInView()
-            self.target_viewer.origin_pos = self.target_viewer.mapFromScene(self.target_viewer.scenePos1)
-            self.target_viewer.end_pos = self.target_viewer.mapFromScene(self.target_viewer.scenePos2)
-
-            # fitInView 要重新生座標才不會有誤差
-            self.target_viewer.scenePos1 = self.target_viewer.mapToScene(self.target_viewer.origin_pos).toPoint()
-            c1 = max(0, self.target_viewer.scenePos1.x())
-            r1 = max(0, self.target_viewer.scenePos1.y())
-
-            self.target_viewer.scenePos2 = self.target_viewer.mapToScene(self.target_viewer.end_pos).toPoint()
-            c2 = min(img.shape[1], self.target_viewer.scenePos2.x())
-            r2 = min(img.shape[0], self.target_viewer.scenePos2.y())
-
-            if r2-r1<2 or c2-c1<2:
-                r1 = 0
-                c1 = 0
-                r2 = img.shape[0]
-                c2 = img.shape[1]
-
-            roi_coor.r1 = r1
-            roi_coor.c1 = c1
-            roi_coor.r2 = r2
-            roi_coor.c2 = c2
-
-        print(roi_coor.r1, roi_coor.r2, roi_coor.c1, roi_coor.c2)
-        ROI_img = img[roi_coor.r1:roi_coor.r2, roi_coor.c1:roi_coor.c2]
-        print(ROI_img.shape)
-        score = self.calFunc[self.target_type](ROI_img)
+        x, y, w, h = self.roi_coor2x_y_w_h(target_roi_coor)
+        print(x, y, w, h)
+        target_roi_img = self.target_viewer.img[y: y+h, x:x+w]
 
         self.close()
-        self.to_main_window_signal.emit(self.tab_idx, np.around(score,5))
+        self.to_main_window_signal.emit(self.idx, self.roi_coor2x_y_w_h(my_roi_coor), target_roi_img)
         
 
 if __name__ == '__main__':

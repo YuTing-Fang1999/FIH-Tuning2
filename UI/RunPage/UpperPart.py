@@ -33,8 +33,8 @@ class UpperPart(QWidget):
 
         GLayout_ML = QGridLayout()
 
-        self.test_mode = QCheckBox()
-        GLayout_ML.addWidget(self.test_mode, 0, 0, 1, 1, Qt.AlignRight)
+        self.TEST_MODE = QCheckBox()
+        GLayout_ML.addWidget(self.TEST_MODE, 0, 0, 1, 1, Qt.AlignRight)
         GLayout_ML.addWidget(QLabel("TEST_MODE"), 0, 1, 1, 1)
 
         self.pretrain = QCheckBox()
@@ -82,10 +82,19 @@ class UpperPart(QWidget):
         self.data = self.ui.data
         self.config = self.ui.config
 
+        if "TEST_MODE" in self.data:
+            self.TEST_MODE.setChecked(self.data["TEST_MODE"])
+            self.pretrain.setChecked(self.data["pretrain"])
+            self.train.setChecked(self.data["train"])
+
     def set_data(self):
-        self.tuning.TEST_MODE = self.test_mode.isChecked()
-        self.tuning.pretrain = self.pretrain.isChecked()
-        self.tuning.train = self.train.isChecked()
+        # self.tuning.TEST_MODE = self.TEST_MODE.isChecked()
+        # self.tuning.pretrain = self.pretrain.isChecked()
+        # self.tuning.train = self.train.isChecked()
+
+        self.data["TEST_MODE"] = self.TEST_MODE.isChecked()
+        self.data["pretrain"] = self.pretrain.isChecked()
+        self.data["train"] = self.train.isChecked()
 
     def setup_controller(self):
         self.btn_run.clicked.connect(self.run)
@@ -138,6 +147,8 @@ class UpperPart(QWidget):
         self.mytimer.stopTimer()
 
     def show_param_window(self):
+        self.ui.param_window.close()
+        self.ui.param_window.resize(400, 400)
         self.ui.param_window.showNormal()
 
 def _async_raise(tid, exctype):

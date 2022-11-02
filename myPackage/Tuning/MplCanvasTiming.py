@@ -13,7 +13,7 @@ class MplCanvas(FigureCanvasQTAgg):
 
 class MplCanvasTiming():
 
-    def __init__(self, ui, color, label):
+    def __init__(self, ui, color, label, axis_name):
         self.data = []
 
         self.canvas = MplCanvas()
@@ -21,6 +21,7 @@ class MplCanvasTiming():
 
         self.color = color
         self.label = label
+        self.axis_name = axis_name
 
     def reset(self):
         self.data = []
@@ -37,6 +38,8 @@ class MplCanvasTiming():
         for i in range(lines.shape[0]):
             self.canvas.axes.plot(
                 x, lines[i], color=self.color[i], label=self.label[i])
+        self.canvas.axes.set_xlabel(self.axis_name[0])
+        self.canvas.axes.set_ylabel(self.axis_name[1])
         self.canvas.axes.legend(fontsize=15)
         self.canvas.fig.canvas.draw()  # 這裡注意是畫布重繪，self.figs.canvas
         self.canvas.fig.canvas.flush_events()  # 畫布刷新self.figs.canvas

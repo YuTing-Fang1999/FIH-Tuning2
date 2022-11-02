@@ -35,6 +35,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.capture = capture
         self.is_run = False
         self.TEST_MODE = False
+        self.pretrain = False
+        self.train = False
 
         self.calFunc = {}
         self.calFunc["sharpness"] = get_sharpness
@@ -42,10 +44,25 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.calFunc["luma stdev"] = get_luma_stdev
 
         # plot
-        self.bset_score_plot = MplCanvasTiming(self.run_page_plot.tab_score.label_plot, color=['r', 'g'], label=['score'])
-        self.hyper_param_plot = MplCanvasTiming(self.run_page_plot.tab_hyper.label_plot, color=['g', 'r'], label=['F', 'Cr'])
+        self.bset_score_plot = MplCanvasTiming(
+            self.run_page_plot.tab_score.label_plot, color=['r', 'g'], label=['score'], axis_name=["Generation * Popsize", "Score"]
+        )
+        self.hyper_param_plot = MplCanvasTiming(
+            self.run_page_plot.tab_hyper.label_plot, color=['g', 'r'], label=['F', 'Cr'], axis_name=["Generation * Popsize", "HyperParam Value"]
+        )
+        self.loss_plot = MplCanvasTiming(
+            self.run_page_plot.tab_loss.label_plot, color=['b'], label=['loss'], axis_name=["Epoch/10", "Loss"]
+        )
+        self.update_plot = MplCanvasTiming(
+            self.run_page_plot.tab_update.label_plot, color=['b', 'k'], label=['using ML', 'no ML'], axis_name=["Generation", "Update Rate"]
+        )
 
     def run(self):
+
+        self.TEST_MODE = self.data["TEST_MODE"]
+        self.pretrain = self.data["pretrain"]
+        self.train = self.data["train"]
+
         ##### param setting #####
         print('self.TEST_MODE =', self.TEST_MODE)
         config = self.config[self.data["page_root"]][self.data["page_key"]]
@@ -371,6 +388,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.setup_param_window_signal.emit(self.popsize, self.param_change_num, self.type_IQM)
 
     def push_to_phone(self, idx):
+        if self.TEST_MODE:
+            QMessageBox.about(self, "info", "TEST_MODE下不可推")
+            print("TEST_MODE下不可推")
         # QMessageBox.about(self, "info", "功能未完善")
         # return
 

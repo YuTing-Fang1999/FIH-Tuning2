@@ -7,6 +7,7 @@ class TriggerSelector(QComboBox):
         super().__init__()
         self.ui = ui
         self.setup_UI()
+        self.setup_controller()
 
     def setup_UI(self):
         self.setStyleSheet("font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255);")
@@ -18,6 +19,9 @@ class TriggerSelector(QComboBox):
         item_names = ["lux_idx from {} to {},  gain from {} to {}".format(d[0], d[1], d[2], d[3])for d in aec_trigger_datas]
         self.clear()
         self.addItems(item_names)
+
+    def setup_controller(self):
+        self.currentIndexChanged[int].connect(self.set_trigger_idx)
 
     def set_trigger_idx(self, trigger_idx, xml_path=''):
         print('trigger_idx', trigger_idx)

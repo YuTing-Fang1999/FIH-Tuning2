@@ -88,13 +88,13 @@
                 10.0,
                 8.0,
                 8.0,
-                1.0,
-                1.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0
+                0.898,
+                0.5125,
+                0.7476,
+                0.3515,
+                0.0775,
+                0.6024,
+                0.0019
             ],
             "coustom_range": [
                 [
@@ -282,15 +282,18 @@
     "exe_path": "",
     "bin_name": "",
     "target_type": [
-        "sharpness"
+        "luma stdev"
     ],
     "target_score": [
-        0.0
+        1.22928
     ],
     "target_weight": [
         1.0
     ],
     "population size": 10,
     "generations": 40,
-    "capture num": 1
+    "capture num": 1,
+    "TEST_MODE": true,
+    "pretrain": false,
+    "train": false
 }

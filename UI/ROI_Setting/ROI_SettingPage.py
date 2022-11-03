@@ -83,23 +83,30 @@ class ROI_SettingPage(QWidget):
         self.GLayout = QGridLayout()
 
         # Arrange layout
-        HBlayout = QHBoxLayout(self)
+        HLayout = QHBoxLayout()
 
         VBlayout = QVBoxLayout()
         VBlayout.addWidget(self.label_img)
         VBlayout.addWidget(self.btn_capture)
         VBlayout.addWidget(self.btn_load_target_pic)
         VBlayout.addWidget(self.btn_add_ROI_item)
-        HBlayout.addLayout(VBlayout)
+        HLayout.addLayout(VBlayout)
 
         VBlayout = QVBoxLayout()
         VBlayout.addWidget(self.table)
-        HBlayout.addLayout(VBlayout)
+        HLayout.addLayout(VBlayout)
 
-        
+        HLayout.setStretch(0,3)
+        HLayout.setStretch(1,2)
 
-        HBlayout.setStretch(0,3)
-        HBlayout.setStretch(1,2)
+        #Scroll Area Properties
+        scroll_wrapper = QHBoxLayout(self)
+        layout_wrapper = QWidget()
+        layout_wrapper.setLayout(HLayout)
+        scroll = QScrollArea() 
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(layout_wrapper)
+        scroll_wrapper.addWidget(scroll)
 
         self.setStyleSheet(
             "QWidget{background-color: rgb(66, 66, 66);}"

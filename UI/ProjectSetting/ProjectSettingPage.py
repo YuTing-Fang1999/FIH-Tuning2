@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QWidget, QGridLayout, QHBoxLayout, QVBoxLayout, QGroupBox, QFormLayout,
+    QWidget, QGridLayout, QHBoxLayout, QVBoxLayout, QGroupBox, QFormLayout, QScrollArea,
     QPushButton, QLabel, QLineEdit, QFileDialog, QSizePolicy, QSpacerItem
 )
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -20,11 +20,20 @@ class ProjectSettingPage(QWidget):
         Spacer = QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.createForm()
 
-        HLayout = QHBoxLayout(self)
+        HLayout = QHBoxLayout()
         HLayout.addSpacerItem(Spacer)
         HLayout.addLayout(self.gridLayout)
         HLayout.addSpacerItem(Spacer)
         HLayout.setAlignment(Qt.AlignCenter)
+
+        #Scroll Area Properties
+        scroll_wrapper = QHBoxLayout(self)
+        layout_wrapper = QWidget()
+        layout_wrapper.setLayout(HLayout)
+        scroll = QScrollArea() 
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(layout_wrapper)
+        scroll_wrapper.addWidget(scroll)
 
         # Set Style
         self.setStyleSheet("QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"

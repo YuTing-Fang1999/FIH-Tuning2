@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QWidget, QGridLayout
+    QWidget, QGridLayout, QHBoxLayout, QScrollArea
 )
 
 from .UpperPart import UpperPart
@@ -14,7 +14,7 @@ class RunPage(QWidget):
         
     def setup_UI(self):
         ###### parent ######
-        gridLayout = QGridLayout(self)
+        gridLayout = QGridLayout()
         ###### parent ######
 
         ###### Upper Part ###### 
@@ -26,6 +26,15 @@ class RunPage(QWidget):
         self.lower_part= LowerPart(self.ui)
         gridLayout.addWidget(self.lower_part, 1, 0, 1, 1)
         ###### Lower Part (plot tab)###### 
+
+        #Scroll Area Properties
+        scroll_wrapper = QHBoxLayout(self)
+        layout_wrapper = QWidget()
+        layout_wrapper.setLayout(gridLayout)
+        scroll = QScrollArea() 
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(layout_wrapper)
+        scroll_wrapper.addWidget(scroll)
 
 
         ###### Set Style ###### 

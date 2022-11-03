@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import (
     QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
-    QSpacerItem, QSizePolicy
+    QSpacerItem, QSizePolicy, QScrollArea, QLabel
 )
+from PyQt5.QtCore import Qt
 
 from .TriggerSelector import TriggerSelector
 from .ParamModifyBlock import ParamModifyBlock
@@ -22,48 +23,55 @@ class ParameterSettingPage(QWidget):
 
     def setup_UI(self):
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        
-        horizontalLayout = QHBoxLayout(self)
+
+        HLayout = QHBoxLayout()
 
         self.ISP_tree = ISP_Tree(self.ui)
-        horizontalLayout.addWidget(self.ISP_tree)
+        HLayout.addWidget(self.ISP_tree)
 
         ###### Left Part ######
-        verticalLayout = QVBoxLayout()
-        verticalLayout.setContentsMargins(0, 0, 0, 0)
+        VLayout = QVBoxLayout()
+        VLayout.setContentsMargins(0, 0, 0, 0)
 
         self.trigger_selector = TriggerSelector(self.ui)
-        verticalLayout.addWidget(self.trigger_selector)
+        VLayout.addWidget(self.trigger_selector)
 
         self.param_modify_block = ParamModifyBlock(self.ui)
-        verticalLayout.addWidget(self.param_modify_block)
+        VLayout.addWidget(self.param_modify_block)
 
         self.push_and_save_block = PushAndSaveBlock(self.ui)
-        verticalLayout.addWidget(self.push_and_save_block)
+        VLayout.addWidget(self.push_and_save_block)
 
-        verticalLayout.addItem(spacerItem)
+        VLayout.addItem(spacerItem)
         
-        horizontalLayout.addLayout(verticalLayout)
+        HLayout.addLayout(VLayout)
         ###### Left Part ######
 
         ###### Middle Part ######
-        verticalLayout = QVBoxLayout()
+        VLayout = QVBoxLayout()
         self.param_range_block = ParamRangeBlock(self.ui)
-        verticalLayout.addWidget(self.param_range_block)
-        verticalLayout.addItem(spacerItem)
-        horizontalLayout.addLayout(verticalLayout)
+        VLayout.addWidget(self.param_range_block)
+        VLayout.addItem(spacerItem)
+        HLayout.addLayout(VLayout)
         ###### Middle Part ######
 
         ###### Right Part ######
-        verticalLayout = QVBoxLayout()
+        VLayout = QVBoxLayout()
         self.hyper_setting_block = HyperSettingBlock(self.ui)
-        verticalLayout.addWidget(self.hyper_setting_block)
+        VLayout.addWidget(self.hyper_setting_block)
 
-        
-
-        verticalLayout.addItem(spacerItem)
-        horizontalLayout.addLayout(verticalLayout)
+        VLayout.addItem(spacerItem)
+        HLayout.addLayout(VLayout)
         ###### Right Part ######
+
+        #Scroll Area Properties
+        scroll_wrapper = QHBoxLayout(self)
+        layout_wrapper = QWidget()
+        layout_wrapper.setLayout(HLayout)
+        scroll = QScrollArea() 
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(layout_wrapper)
+        scroll_wrapper.addWidget(scroll)
 
         # Set Style
         self.setStyleSheet(

@@ -145,6 +145,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             trial_denorm = self.min_b + self.pop[ind_idx] * self.diff
             # update param_value
             self.param_value[self.param_change_idx] = trial_denorm
+            # trial_denorm = np.around(trial_denorm, 4)
 
             # measure score
             now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx), self.param_value)
@@ -201,6 +202,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # denormalize to [min_b, max_b]
         trial_denorm = self.min_b + trial * self.diff
+        # trial_denorm = np.around(trial_denorm, 4)
+
         # update param_value
         self.param_value[self.param_change_idx] = trial_denorm
 
@@ -211,11 +214,11 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         print('now IQM', now_IQM)
         print('now fitness', f)
 
-        # update_param_window
-        self.update_param_window_signal.emit(ind_idx, trial_denorm, f, now_IQM)
-
         # 如果突變種比原本的更好
         if f < self.fitness[ind_idx]:
+            # update_param_window
+            self.update_param_window_signal.emit(ind_idx, trial_denorm, f, now_IQM)
+
             # 替換原本的個體
             print('replace with better score', f)
             self.set_statusbar_signal.emit('generation {} individual {} replace with better score'.format(gen_dir, ind_idx))

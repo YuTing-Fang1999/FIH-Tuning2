@@ -95,7 +95,7 @@ class MainWindow(QMainWindow):
         self.VLayout.addWidget(self.tabWidget)
 
         self.logger = Logger()
-        self.VLayout.addWidget(self.logger)
+        # self.VLayout.addWidget(self.logger)
 
         self.setCentralWidget(self.central_widget)
 

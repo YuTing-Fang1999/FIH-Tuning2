@@ -1,8 +1,10 @@
 import sys
 from PyQt5.QtWidgets import (
-    QTabWidget, QStatusBar,
-    QMainWindow, QMessageBox
+    QTabWidget, QStatusBar, QWidget, QLabel,
+    QMainWindow, QMessageBox, QToolButton,
+    QVBoxLayout, QScrollArea
 )
+from PyQt5.QtCore import Qt
 from UI.ProjectSetting.ProjectSettingPage import ProjectSettingPage
 from UI.ROI_Setting.ROI_SettingPage import ROI_SettingPage
 from UI.ParameterSettingPage.ParameterSettingPage import ParameterSettingPage
@@ -14,6 +16,44 @@ from myPackage.Param_window import Param_window
 
 import json
 
+class ButtonToggleOpen(QToolButton):
+
+    def __init__(self):
+        super().__init__()
+        self.setCheckable(True)                                  
+        self.setChecked(True)                                   
+        self.setArrowType(Qt.UpArrow)
+        self.setAutoRaise(True)
+        self.setToolButtonStyle(Qt.ToolButtonIconOnly)
+
+class Logger(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.resize(1000,500)
+
+        self.HLayout = QVBoxLayout(self)
+
+        self.btn_toggle_open = ButtonToggleOpen()                                     
+        self.HLayout.addWidget(self.btn_toggle_open)
+
+        self.info=QLabel("logger\n\n111\n\n\n134")
+        self.info.hide()
+        self.HLayout.addWidget(self.info)
+
+        self.btn_toggle_open.clicked.connect(self.toggle_open)
+
+    def toggle_open(self):
+        if self.btn_toggle_open.isChecked():
+            self.info.hide()
+            self.btn_toggle_open.setArrowType(Qt.UpArrow)
+        else:
+            self.info.show()
+            self.btn_toggle_open.setArrowType(Qt.DownArrow)
+
+    def show_infoes(self,info):
+        print(info)
+        pre_text=self.info.text()
+        self.info.setText(pre_text+info+'\n\n')
 
 class MainWindow(QMainWindow):
 
@@ -32,19 +72,32 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("FIH-Tuning")
         self.param_window = Param_window()
         
+        self.central_widget = QWidget()
+        self.VLayout = QVBoxLayout(self.central_widget)
+
         self.tabWidget = QTabWidget()
 
+
         self.project_setting_page = ProjectSettingPage(self)
+
+        
         self.ROI_setting_page = ROI_SettingPage(self)
+        
         self.parameter_setting_page = ParameterSettingPage(self)
         self.run_page = RunPage(self)
+
 
         self.tabWidget.addTab(self.project_setting_page, "選擇project")
         self.tabWidget.addTab(self.ROI_setting_page, "ROI設定")
         self.tabWidget.addTab(self.parameter_setting_page, "參數設定")
         self.tabWidget.addTab(self.run_page, "執行")
 
-        self.setCentralWidget(self.tabWidget)
+        self.VLayout.addWidget(self.tabWidget)
+
+        self.logger = Logger()
+        self.VLayout.addWidget(self.logger)
+
+        self.setCentralWidget(self.central_widget)
 
         self.statusbar = QStatusBar(self)
         self.setStatusBar(self.statusbar)
@@ -87,17 +140,19 @@ class MainWindow(QMainWindow):
         self.tuning.update_param_window_signal.connect(self.update_param_window)
         self.tuning.setup_param_window_signal.connect(self.setup_param_window)
 
+        #logger
+
     def read_config(self):
         with open('config.json') as f:
             return json.load(f)
 
     def capture_fail(self):
-        self.tab3.upper_part.mytimer.stopTimer()
+        if self.tuning.is_run: self.run_page.upper_part.mytimer.stopTimer()
         QMessageBox.about(self, "拍攝未成功", "拍攝未成功\n請多按幾次拍照鍵測試\n再按ok鍵重新拍攝")
         self.capture.state.acquire()
         self.capture.state.notify()  # Unblock self if waiting.
         self.capture.state.release()
-        self.tab3.upper_part.mytimer.continueTimer()
+        if self.tuning.is_run: self.run_page.upper_part.mytimer.continueTimer()
 
     def alert_info(self, title, text):
         print(title)

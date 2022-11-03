@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget, QSpacerItem, QSizePolicy,
     QVBoxLayout, QHBoxLayout, QFrame, QGridLayout,
     QPushButton, QLabel, QApplication, QCheckBox, QTableWidget, QHeaderView, QLineEdit,
-    QTableWidgetItem, QFileDialog
+    QTableWidgetItem, QFileDialog, QScrollArea
 )    
 import cv2
 import numpy as np
@@ -12,7 +12,7 @@ from copy import deepcopy
 import sys
 sys.path.append(".")
 
-from .ROI_Info import ROI_Info
+# from .ROI_Info import ROI_Info
 from .ImageViewer import ImageViewer
 from .ROI_Select_Window import ROI_Select_Window
 from .MeasureWindow import MeasureWindow
@@ -20,9 +20,10 @@ import os
 import random
 
 class DeleteBtn(QPushButton):
-    def __init__(self, table):
+    def __init__(self, table, page):
         super().__init__()
         self.table = table
+        self.page = page
         self.setText("刪除")
         self.clicked.connect(self.deleteClicked)
 
@@ -32,6 +33,7 @@ class DeleteBtn(QPushButton):
             row = self.table.indexAt(button.pos()).row()
             self.table.removeRow(row)
             print("del row", row)
+            self.page.data["roi"].pop(row)
 
 class ROI_SettingPage(QWidget):
     to_setting_signal = pyqtSignal(list, list, list)
@@ -41,6 +43,10 @@ class ROI_SettingPage(QWidget):
         super().__init__()
         self.ui = ui
         self.filefolder="./"
+
+        # self.label_target_type = []
+        # self.edit_target_score = []
+        # self.edit_target_weight = []
 
         self.setup_UI()
         self.setup_controller()
@@ -90,6 +96,8 @@ class ROI_SettingPage(QWidget):
         VBlayout.addWidget(self.table)
         HBlayout.addLayout(VBlayout)
 
+        
+
         HBlayout.setStretch(0,3)
         HBlayout.setStretch(1,2)
 
@@ -121,12 +129,16 @@ class ROI_SettingPage(QWidget):
 
         row = self.table.rowCount()
         self.table.setRowCount(row + 1)
+
         label = QLabel(target_type)
         label.setAlignment(Qt.AlignCenter)
         self.table.setCellWidget(row,0,label)
+
         self.table.setCellWidget(row,1,QLineEdit(str(target_score)))
+
         self.table.setCellWidget(row,2,QLineEdit(str(target_weight)))
-        self.table.setCellWidget(row,3,DeleteBtn(self.table))
+
+        self.table.setCellWidget(row,3,DeleteBtn(self.table, self))
     
     def add_ROI_item_click(self):
         if len(self.ROI_select_window.my_viewer.img)==0:
@@ -183,7 +195,7 @@ class ROI_SettingPage(QWidget):
         img = cv2.imread(img_name+".jpg")
         self.img = img
         self.label_img.setPhoto(img)
-        self.ROI_select_window.set_img(img)
+        self.ROI_select_window.my_viewer.set_img(img)
         self.draw_ROI()
         
     def set_photo(self):
@@ -202,10 +214,10 @@ class ROI_SettingPage(QWidget):
         self.data["target_weight"] = []
         # print(len(self.data["roi"]), self.table.rowCount())
         assert len(self.data["roi"]) == self.table.rowCount()
-        # for i in range(self.table.rowCount()):
-        #     self.data["target_type"].append(self.roi_info[i].target_type)
-        #     self.data["target_score"].append(float(self.roi_info[i].target_score.text()))
-        #     self.data["target_weight"].append(float(self.roi_info[i].target_weight.text()))
+        for i in range(self.table.rowCount()):
+            self.data["target_type"].append(self.table.cellWidget(i, 0).text())
+            self.data["target_score"].append(float(self.table.cellWidget(i, 1).text()))
+            self.data["target_weight"].append(float(self.table.cellWidget(i, 2).text()))
 
     def update_UI(self):
         self.data = self.ui.data

@@ -142,9 +142,10 @@ class PushAndSaveBlock(QWidget):
             self.ui.tuning.mkdir(dir_name)
             path = "{}/{}".format(dir_name, img_name)
         print("PushAndSaveBlock do_capture")
+        self.ui.project_setting_page.set_data()
         self.ui.capture.capture(path=path, focus_time = 3, save_time = 0.5, capture_num = 1)
 
     def recover_param(self):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
-        self.ui.parameter_setting_page.set_trigger_idx(block_data["trigger_idx"], xml_path='C:/Users/s830s/OneDrive/文件/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project_origin/Scenario.Default/XML/OPE/wnr24_ope.xml')
+        self.ui.parameter_setting_page.trigger_selector.set_trigger_idx(block_data["trigger_idx"], xml_path='C:/Users/s830s/OneDrive/文件/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project_origin/Scenario.Default/XML/OPE/wnr24_ope.xml')
 

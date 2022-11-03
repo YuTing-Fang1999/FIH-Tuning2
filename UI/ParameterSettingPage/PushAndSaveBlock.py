@@ -39,7 +39,7 @@ class PushAndSaveBlock(QWidget):
 
         VLayout.addLayout(gridLayout)
 
-        self.btn_push_phone = QPushButton("推到手機")
+        self.btn_push_phone = QPushButton("推到手機 + 拍照")
         VLayout.addWidget(self.btn_push_phone)
 
         self.btn_capture = QPushButton("拍照")

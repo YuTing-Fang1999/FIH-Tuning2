@@ -103,9 +103,10 @@ class ParameterSettingPage(QWidget):
         self.param_range_block.update_UI(root, key)
         self.data["page_root"] = root
         self.data["page_key"] = key
-        self.set_trigger_idx(0)
+        self.trigger_selector.set_trigger_idx(0)
 
     def set_project(self, folder_path):
+        print('set_project')
         self.data['project_path'] = folder_path
         self.data['project_name'] = folder_path.split('/')[-1]
         self.data['tuning_dir'] = '/'.join(folder_path.split('/')[:-1])
@@ -113,7 +114,7 @@ class ParameterSettingPage(QWidget):
         self.set_project_XML(self.data['xml_path'])
 
     def set_project_XML(self, xml_path):
-        print('Read XML')
+        print("set_project_XML")
         if "page_root" not in self.data: 
             print('Return because no page root')
             return
@@ -150,7 +151,7 @@ class ParameterSettingPage(QWidget):
             aec_trigger_datas.append(data)
 
         self.trigger_selector.update_UI(aec_trigger_datas)
-        self.trigger_selector.set_trigger_idx(0)
+
 
     
     

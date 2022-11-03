@@ -9,7 +9,7 @@ from PyQt5.QtGui import QImage, QPixmap
 import sys
 sys.path.append("../..")
 
-from ImageViewer import ImageViewer
+from .ImageViewer import ImageViewer
 from myPackage.Tuning.ImageMeasurement import *
 
 
@@ -49,7 +49,7 @@ class Block(QWidget):
         self.VLayout.addWidget(self.score_block)
 
 class MeasureWindow(QWidget):  
-    to_main_window_signal = pyqtSignal(int, list, list, list)
+    to_main_window_signal = pyqtSignal(list, list, list)
     
     def __init__(self):
         super().__init__()  
@@ -93,8 +93,7 @@ class MeasureWindow(QWidget):
             "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
         )
 
-    def measure_target(self, img_idx, my_x_y_w_h, target_roi_img):
-        self.img_idx = img_idx
+    def measure_target(self, my_x_y_w_h, target_roi_img):
         self.my_x_y_w_h = my_x_y_w_h
         self.block.img_block.setPhoto(target_roi_img)
 
@@ -116,7 +115,7 @@ class MeasureWindow(QWidget):
                 score_value.append(self.score_value[i])
 
         self.close()
-        self.to_main_window_signal.emit(self.img_idx, self.my_x_y_w_h, target_type, score_value)
+        self.to_main_window_signal.emit(self.my_x_y_w_h, target_type, score_value)
 
 
 if __name__ == '__main__':

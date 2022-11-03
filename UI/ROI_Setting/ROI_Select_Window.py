@@ -215,7 +215,7 @@ class ImageViewer(QtWidgets.QGraphicsView):
         return roi_coor
 
 class ROI_Select_Window(QtWidgets.QWidget):
-    to_main_window_signal = pyqtSignal(int, list, np.ndarray)
+    to_main_window_signal = pyqtSignal(list, np.ndarray)
 
     def __init__(self):
         super().__init__()
@@ -277,8 +277,7 @@ class ROI_Select_Window(QtWidgets.QWidget):
         img = cv2.imdecode(np.fromfile(file=filepath, dtype=np.uint8), cv2.IMREAD_COLOR)
         self.target_viewer.set_img(img)
 
-    def select_ROI(self, img_idx):
-        self.idx = img_idx
+    def select_ROI(self):
         
         if len(self.target_viewer.img)==0: self.open_img()
         self.my_viewer.set_ROI_draw()
@@ -297,7 +296,7 @@ class ROI_Select_Window(QtWidgets.QWidget):
         target_roi_img = self.target_viewer.img[y: y+h, x:x+w]
 
         self.close()
-        self.to_main_window_signal.emit(self.idx, self.roi_coor2x_y_w_h(my_roi_coor), target_roi_img)
+        self.to_main_window_signal.emit(self.roi_coor2x_y_w_h(my_roi_coor), target_roi_img)
         
 
 if __name__ == '__main__':

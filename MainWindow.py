@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.config = self.read_config()
         self.setting = Setting(self)
         self.data = self.setting.data
-        self.capture = Capture()
+        self.capture = Capture(self.logger)
         self.tuning = Tuning(self.run_page.lower_part, self.data, self.config, self.capture)
         self.update_UI()
         self.setup_controller()

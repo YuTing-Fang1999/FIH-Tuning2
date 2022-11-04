@@ -11,8 +11,9 @@ import threading
 class Capture(QWidget):
     capture_fail_signal = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, logger):
         super().__init__()
+        self.logger = logger
 
         self.CAMERA_DEBUG = True
         self.CAMERA_PATH = '/sdcard/DCIM/Camera/'
@@ -30,8 +31,8 @@ class Capture(QWidget):
         self.transfer_img(path, capture_num)
 
     def open_camera(self):
-        os.system("adb shell am start -a android.media.action.STILL_IMAGE_CAMERA --ez com.google.assistant.extra.CAMERA_OPEN_ONLY true --ez android.intent.extra.CAMERA_OPEN_ONLY true --ez isVoiceQuery true --ez NoUiQuery true --es android.intent.extra.REFERRER_NAME android-app://com.google.android.googlequicksearchbox/https/www.google.com")
-
+        self.logger.run_cmd("adb shell am start -a android.media.action.STILL_IMAGE_CAMERA --ez com.google.assistant.extra.CAMERA_OPEN_ONLY true --ez android.intent.extra.CAMERA_OPEN_ONLY true --ez isVoiceQuery true --ez NoUiQuery true --es android.intent.extra.REFERRER_NAME android-app://com.google.android.googlequicksearchbox/https/www.google.com")
+        # os.system("adb shell am start -a android.media.action.STILL_IMAGE_CAMERA --ez com.google.assistant.extra.CAMERA_OPEN_ONLY true --ez android.intent.extra.CAMERA_OPEN_ONLY true --ez isVoiceQuery true --ez NoUiQuery true --es android.intent.extra.REFERRER_NAME android-app://com.google.android.googlequicksearchbox/https/www.google.com")
                 
     def clear_camera_folder(self):
         #delete from phone: adb shell rm self.CAMERA_PATH/*

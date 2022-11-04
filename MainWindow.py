@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QTabWidget, QStatusBar, QWidget, QLabel,
     QMainWindow, QMessageBox, QToolButton,
-    QVBoxLayout, QScrollArea
+    QVBoxLayout, QScrollArea, QSplitter
 )
 from PyQt5.QtCore import Qt
 from UI.ProjectSetting.ProjectSettingPage import ProjectSettingPage
@@ -29,26 +29,23 @@ class ButtonToggleOpen(QToolButton):
 class Logger(QWidget):
     def __init__(self):
         super().__init__()
-        self.resize(1000,500)
+        VLayout = QVBoxLayout(self)
+        self.info = QLabel("logger\n\n")
+        
+        #Scroll Area Properties
+        scroll = QScrollArea() 
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.info)
+        VLayout.addWidget(scroll)
 
-        self.HLayout = QVBoxLayout(self)
-
-        self.btn_toggle_open = ButtonToggleOpen()                                     
-        self.HLayout.addWidget(self.btn_toggle_open)
-
-        self.info=QLabel("logger\n\n111\n\n\n134")
-        self.info.hide()
-        self.HLayout.addWidget(self.info)
-
-        self.btn_toggle_open.clicked.connect(self.toggle_open)
-
-    def toggle_open(self):
-        if self.btn_toggle_open.isChecked():
-            self.info.hide()
-            self.btn_toggle_open.setArrowType(Qt.UpArrow)
-        else:
-            self.info.show()
-            self.btn_toggle_open.setArrowType(Qt.DownArrow)
+        self.setStyleSheet(
+            """
+            background-color: rgb(0, 0, 0);
+            font-size:12pt; 
+            font-family:微軟正黑體; 
+            color:white;
+            """
+        )
 
     def show_infoes(self,info):
         print(info)
@@ -73,36 +70,29 @@ class MainWindow(QMainWindow):
         self.param_window = Param_window()
         
         self.central_widget = QWidget()
-        self.VLayout = QVBoxLayout(self.central_widget)
+        wrapper = QVBoxLayout(self.central_widget)
+        Vsplitter = QSplitter(Qt.Vertical)
 
         self.tabWidget = QTabWidget()
 
-
         self.project_setting_page = ProjectSettingPage(self)
-
-        
         self.ROI_setting_page = ROI_SettingPage(self)
-        
         self.parameter_setting_page = ParameterSettingPage(self)
         self.run_page = RunPage(self)
-
 
         self.tabWidget.addTab(self.project_setting_page, "選擇project")
         self.tabWidget.addTab(self.ROI_setting_page, "ROI設定")
         self.tabWidget.addTab(self.parameter_setting_page, "參數設定")
         self.tabWidget.addTab(self.run_page, "執行")
 
-        self.VLayout.addWidget(self.tabWidget)
+        Vsplitter.addWidget(self.tabWidget)
 
         self.logger = Logger()
-        # self.VLayout.addWidget(self.logger)
+        Vsplitter.addWidget(self.logger)
+
+        wrapper.addWidget(Vsplitter)
 
         self.setCentralWidget(self.central_widget)
-
-        self.statusbar = QStatusBar(self)
-        self.setStatusBar(self.statusbar)
-        self.statusbar.setStyleSheet("color: white")
-        self.statusbar.showMessage('只存在3秒的消息', 3000)
 
         self.setStyleSheet(
             """

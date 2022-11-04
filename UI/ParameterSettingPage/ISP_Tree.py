@@ -32,7 +32,9 @@ class ISP_Tree(QWidget):
         self.HLayout.addWidget(self.btn_toggle_open)
 
     def update_UI(self):
+        self.data = self.ui.data
         self.config = self.ui.config
+        self.page = self.ui.parameter_setting_page
         
         for k in self.config:
             root=QTreeWidgetItem(self.tree)
@@ -66,11 +68,11 @@ class ISP_Tree(QWidget):
         root = item.parent().text(0)
         key = item.text(0)
         print('change param page to', root, key)
-        self.param_modify_block.update_UI(root, key)
-        self.param_range_block.update_UI(root, key)
+        self.page.param_modify_block.update_UI(root, key)
+        self.page.param_range_block.update_UI(root, key)
         self.data["page_root"] = root
         self.data["page_key"] = key
-        self.set_trigger_idx(0)
+        self.page.trigger_selector.set_trigger_idx(0)
 
 
 if __name__ == '__main__':

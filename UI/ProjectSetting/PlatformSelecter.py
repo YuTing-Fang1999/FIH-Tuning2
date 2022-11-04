@@ -36,6 +36,7 @@ class PlatformSelecter(QWidget):
 
     def update_UI(self):
         self.data = self.ui.data
+        self.data["platform"]=self.rb1.text()
 
     def onButtonGroup1Click(self):
         if self.buttongroup1.checkedId() == 1:

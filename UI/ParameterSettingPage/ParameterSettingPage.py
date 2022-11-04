@@ -81,6 +81,7 @@ class ParameterSettingPage(QWidget):
         )
 
     def update_UI(self):
+        self.logger = self.ui.logger
         root, key = self.ui.data["page_root"], self.ui.data["page_key"]
         self.ISP_tree.update_UI()
         self.param_modify_block.update_UI(root, key)
@@ -114,7 +115,7 @@ class ParameterSettingPage(QWidget):
         self.trigger_selector.set_trigger_idx(0)
 
     def set_project(self, folder_path):
-        print('set_project')
+        self.logger.show_info('\nset_project')
         self.data['project_path'] = folder_path
         self.data['project_name'] = folder_path.split('/')[-1]
         self.data['tuning_dir'] = '/'.join(folder_path.split('/')[:-1])
@@ -122,12 +123,12 @@ class ParameterSettingPage(QWidget):
         self.set_project_XML(self.data['xml_path'])
 
     def set_project_XML(self, xml_path):
-        print("set_project_XML")
+        self.logger.show_info("set_project_XML")
         if "page_root" not in self.data: 
-            print('Return because no page root')
+            self.logger.show_info('Return because no page root')
             return
         if "page_key" not in self.data: 
-            print('Return because no page key')
+            self.logger.show_info('Return because no page key')
             return
         
         config = self.config[self.data["page_root"]][self.data["page_key"]]
@@ -135,7 +136,8 @@ class ParameterSettingPage(QWidget):
 
         # 從檔案載入並解析 XML 資料
         if not os.path.exists(xml_path):
-            print('Return because no such file:', xml_path)
+            self.logger.show_info('Return because no such file: '+xml_path)
+            self.logger.show_info("請確認是否為"+self.data["platform"])
             return
 
         tree = ET.parse(xml_path)

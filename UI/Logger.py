@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QMessageBox, QToolButton,
     QVBoxLayout, QScrollArea, QSplitter
 )
+import sys
 import subprocess
 
 class Logger(QWidget):
@@ -30,12 +31,15 @@ class Logger(QWidget):
             """
         )
 
-    def show_infoes(self, info):
-        print(info)
+    def show_info(self, info):
         pre_text=self.info.text()
+        print(info)
         self.info.setText(pre_text+info+'\n')
+        self.info.repaint() # 馬上顯示的方法
+
         self.scroll_falg=True
         self.Vscroll_bar.setValue(self.Vscroll_bar.maximum())
+
 
     def scroll_range_changed_handler(self, minV, maxV):
         if self.scroll_falg:
@@ -49,27 +53,30 @@ class Logger(QWidget):
         :param shell: 是否開啟shell
         :return: 子進程狀態碼和執行結果
         """
-        self.show_infoes('************** START **************')
-        self.show_infoes(cmd)
-        
-        p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.show_info('************** START **************')
+        self.show_info(cmd)
+        try:
+            p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        except:
+            self.show_info("指令錯誤")
+            self.show_info('************** FAILED **************')
+            return -1, ""
         result = []
         while p.poll() is None:
             line = p.stdout.readline().strip()
             if line:
-                line = _decode_data(line)
                 result.append(line)
-                self.show_infoes(line)
+                self.show_info(_decode_data(line))
             # 清空緩存
-            # sys.stdout.flush()
-            # sys.stderr.flush()
+            sys.stdout.flush()
+            sys.stderr.flush()
         # 判斷返回碼狀態
         if p.returncode == 0:
-            self.show_infoes('************** SUCCESS **************')
+            self.show_info('************** SUCCESS **************')
         else:
-            self.show_infoes('************** FAILED **************')
+            self.show_info('************** FAILED **************')
 
-        # return p.returncode, '\r\n'.join(result)
+        return p.returncode, '\r\n'.join(result)
 
 
 def _decode_data(byte_data: bytes):

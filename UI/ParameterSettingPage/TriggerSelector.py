@@ -13,6 +13,7 @@ class TriggerSelector(QComboBox):
         self.setStyleSheet("font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255);")
 
     def update_UI(self, aec_trigger_datas):
+        self.logger = self.ui.logger
         self.parameter_setting_page = self.ui.parameter_setting_page
         self.data = self.ui.data
         self.config = self.ui.config
@@ -71,3 +72,5 @@ class TriggerSelector(QComboBox):
 
         self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
         self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])
+
+        self.logger.show_info("Successfully load {}".format(self.data["project_name"]))

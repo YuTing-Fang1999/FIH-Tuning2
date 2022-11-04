@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         self.tuning.update_param_window_signal.connect(self.update_param_window)
         self.tuning.setup_param_window_signal.connect(self.setup_param_window)
         # logger
-        self.tuning.log_info_signal.connect(self.logger.show_infoes)
+        self.tuning.log_info_signal.connect(self.logger.show_info)
 
         #logger
 

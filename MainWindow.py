@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt
 from UI.ProjectSetting.ProjectSettingPage import ProjectSettingPage
 from UI.ROI_Setting.ROI_SettingPage import ROI_SettingPage
 from UI.ParameterSettingPage.ParameterSettingPage import ParameterSettingPage
+from UI.Logger import Logger
 from UI.RunPage.RunPage import RunPage
 from myPackage.Setting import Setting
 from myPackage.Tuning.Tuning import Tuning
@@ -16,41 +17,6 @@ from myPackage.Param_window import Param_window
 
 import json
 
-class ButtonToggleOpen(QToolButton):
-
-    def __init__(self):
-        super().__init__()
-        self.setCheckable(True)                                  
-        self.setChecked(True)                                   
-        self.setArrowType(Qt.UpArrow)
-        self.setAutoRaise(True)
-        self.setToolButtonStyle(Qt.ToolButtonIconOnly)
-
-class Logger(QWidget):
-    def __init__(self):
-        super().__init__()
-        VLayout = QVBoxLayout(self)
-        self.info = QLabel("logger\n\n")
-        
-        #Scroll Area Properties
-        scroll = QScrollArea() 
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.info)
-        VLayout.addWidget(scroll)
-
-        self.setStyleSheet(
-            """
-            background-color: rgb(0, 0, 0);
-            font-size:12pt; 
-            font-family:微軟正黑體; 
-            color:white;
-            """
-        )
-
-    def show_infoes(self,info):
-        print(info)
-        pre_text=self.info.text()
-        self.info.setText(pre_text+info+'\n\n')
 
 class MainWindow(QMainWindow):
 
@@ -129,6 +95,8 @@ class MainWindow(QMainWindow):
         # tuning to param window
         self.tuning.update_param_window_signal.connect(self.update_param_window)
         self.tuning.setup_param_window_signal.connect(self.setup_param_window)
+        # logger
+        self.tuning.log_info_signal.connect(self.logger.show_infoes)
 
         #logger
 

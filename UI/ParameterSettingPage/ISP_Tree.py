@@ -39,6 +39,7 @@ class ISP_Tree(QWidget):
         for k in self.config:
             root=QTreeWidgetItem(self.tree)
             root.setText(0,k)
+            root.setExpanded(True)
             # root.setCheckState(0, Qt.Checked)
             self.tree.addTopLevelItem(root)
             for k2 in self.config[k]:

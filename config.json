@@ -62,8 +62,14 @@
         },
         "ABF": {
             "file_path": "OPE/wnr24_ope.xml",
-            "xml_node": "",
+            "xml_node": "chromatix_wnr24_core/mod_wnr24_post_scale_ratio_data/post_scale_ratio_data/mod_wnr24_pre_scale_ratio_data/pre_scale_ratio_data/mod_wnr24_total_scale_ratio_data/total_scale_ratio_data/mod_wnr24_drc_gain_data/drc_gain_data/mod_wnr24_hdr_aec_data/hdr_aec_data/mod_wnr24_aec_data",
+            "data_node": "wnr24_rgn_data",
             "param_names": [
+                "noise_profile_y",
+                "noise_profile_cb",
+                "noise_profile_cr",
+                "denoise_scale_y",
+                "denoise_scale_chroma"
             ],
             "title": [
                 "Noise Profile",

@@ -34,6 +34,7 @@ class DeleteBtn(QPushButton):
             self.table.removeRow(row)
             print("del row", row)
             self.page.data["roi"].pop(row)
+            self.page.draw_ROI()
 
 class ROI_SettingPage(QWidget):
     to_setting_signal = pyqtSignal(list, list, list)

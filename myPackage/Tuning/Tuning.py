@@ -26,6 +26,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     show_param_window_signal = pyqtSignal()
     setup_param_window_signal = pyqtSignal(int, int, np.ndarray) # popsize, param_change_num, IQM_names
     update_param_window_signal = pyqtSignal(int, np.ndarray, float, np.ndarray)
+    # logger
+    log_info_signal = pyqtSignal(str)
 
     def __init__(self, run_page_plot, data, config, capture):
         super().__init__()
@@ -58,13 +60,15 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         )
 
     def run(self):
+        self.log_info_signal.emit("start")
 
         self.TEST_MODE = self.data["TEST_MODE"]
         self.pretrain = self.data["pretrain"]
         self.train = self.data["train"]
 
         ##### param setting #####
-        print('self.TEST_MODE =', self.TEST_MODE)
+        self.log_info_signal.emit('self.TEST_MODE = {}'.format(self.TEST_MODE))
+        # print('self.TEST_MODE =', self.TEST_MODE)
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
@@ -72,7 +76,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.xml_path = self.data['xml_path']+config["file_path"]
         self.xml_node = config["xml_node"]
         if not os.path.exists(self.xml_path):
-            print("The", self.xml_path, "doesn't exists")
+            self.log_info_signal.emit("The {} doesn't exists".format(self.xml_path))
+            # print("The", self.xml_path, "doesn't exists")
             self.finish_signal.emit()
             sys.exit()
 
@@ -139,7 +144,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # initial individual
         for ind_idx in range(self.popsize):
             self.set_individual_signal.emit(str(ind_idx))
-            print('\n\ninitial individual:', ind_idx)
+            self.log_info_signal.emit('\n\ninitial individual: {}'.format(ind_idx))
+            # print('\n\ninitial individual:', ind_idx)
 
             # denormalize to [min_b, max_b]
             trial_denorm = self.min_b + self.pop[ind_idx] * self.diff
@@ -151,8 +157,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx), self.param_value)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
-            print('now IQM', now_IQM)
-            print('now score', self.fitness[ind_idx])
+            self.log_info_signal.emit('now IQM {}'.format(now_IQM))
+            self.log_info_signal.emit('now score {}'.format(self.fitness[ind_idx]))
+            # print('now IQM', now_IQM)
+            # print('now score', self.fitness[ind_idx])
 
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, self.fitness[ind_idx], now_IQM)

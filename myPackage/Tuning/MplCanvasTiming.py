@@ -13,15 +13,18 @@ class MplCanvas(FigureCanvasQTAgg):
 
 class MplCanvasTiming():
 
-    def __init__(self, ui, color, label, axis_name):
+    def __init__(self, label_plot, color, name, axis_name):
         self.data = []
 
         self.canvas = MplCanvas()
-        self.layout = QHBoxLayout(ui)
+        self.layout = QHBoxLayout(label_plot)
 
         self.color = color
-        self.label = label
+        self.name = name
         self.axis_name = axis_name
+
+    def setup(self, name):
+        self.name = name
 
     def reset(self):
         self.data = []
@@ -37,7 +40,7 @@ class MplCanvasTiming():
         x = list(range(lines.shape[-1]))
         for i in range(lines.shape[0]):
             self.canvas.axes.plot(
-                x, lines[i], color=self.color[i], label=self.label[i])
+                x, lines[i], color=self.color[i], label=self.name[i])
         self.canvas.axes.set_xlabel(self.axis_name[0])
         self.canvas.axes.set_ylabel(self.axis_name[1])
         self.canvas.axes.legend(fontsize=15)

@@ -23,7 +23,9 @@ class Logger(QWidget):
 
         self.Vscroll_bar = scroll.verticalScrollBar()
         self.Vscroll_bar.rangeChanged.connect(self.scroll_range_changed_handler)
+        self.Vscroll_bar.valueChanged.connect(self.scroll_value_changed_handler)
         self.scroll_falg = False
+        self.auto_scroll = True
 
         self.signal.connect(self.show_info)
 
@@ -36,20 +38,29 @@ class Logger(QWidget):
             """
         )
 
+        # if self.run_cmd("adb")!=0:
+        #     self.signal.emit("可能是沒安裝adb，請先安裝adb")
+
     def show_info(self, info):
         pre_text=self.info.text()
         print(info)
         self.info.setText(pre_text+info+'\n')
         self.info.repaint() # 馬上顯示的方法
 
-        self.scroll_falg=True
-        self.Vscroll_bar.setValue(self.Vscroll_bar.maximum())
-
+        if self.auto_scroll:
+            self.scroll_falg=True
+            self.Vscroll_bar.setValue(self.Vscroll_bar.maximum())
 
     def scroll_range_changed_handler(self, minV, maxV):
         if self.scroll_falg:
             self.Vscroll_bar.setValue(maxV)
             self.scroll_falg=False
+
+    def scroll_value_changed_handler(self, value):
+        if self.Vscroll_bar.maximum()!=value:
+            self.auto_scroll=False
+        else: 
+            self.auto_scroll=True
 
     def run_cmd(self, cmd, shell=False):
         """
@@ -66,12 +77,12 @@ class Logger(QWidget):
             self.signal.emit("指令錯誤")
             self.signal.emit('************** FAILED **************')
             return -1, ""
-        result = []
+        # result = []
         while p.poll() is None:
             line = p.stdout.readline().strip()
             if line:
                 line = _decode_data(line)
-                result.append(line)
+                # result.append(line)
                 self.signal.emit(line)
             # 清空緩存
             sys.stdout.flush()
@@ -82,7 +93,7 @@ class Logger(QWidget):
         else:
             self.signal.emit('************** FAILED **************')
 
-        return p.returncode, '\r\n'.join(result)
+        return p.returncode #, '\r\n'.join(result)
 
 
 def _decode_data(byte_data: bytes):

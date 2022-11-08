@@ -1,16 +1,26 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import (
+    QPushButton, QMainWindow, QWidget, QVBoxLayout, QGridLayout,
+    QLabel, QApplication
+)
 import numpy as np
 
-class Push_Btn(QtWidgets.QPushButton):
+class Push_Btn(QPushButton):
     def __init__(self, idx, signal) -> None:
         super().__init__()
         self.idx = idx
         self.setText("Push")
         self.clicked.connect(lambda: signal.emit(self.idx))
 
-class Param_window(QtWidgets.QMainWindow):
-    push_to_phone_signal = pyqtSignal(int)
+class Param(QWidget):
+    def __init__(self):
+        super().__init__()
+        # 有空把param的部分作成滑鼠滾動
+
+
+class Param_window(QMainWindow):
+    # push_to_phone_signal = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -18,9 +28,9 @@ class Param_window(QtWidgets.QMainWindow):
 
         self.setWindowTitle("param window")
         self.resize(0, 0)
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.verticalLayout_parent = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.gridLayout = QtWidgets.QGridLayout()
+        self.centralwidget = QWidget(self)
+        self.verticalLayout_parent = QVBoxLayout(self.centralwidget)
+        self.gridLayout = QGridLayout()
      
         self.gridLayout.setColumnStretch(1, 1)
         self.gridLayout.setColumnStretch(2, 1)
@@ -62,19 +72,19 @@ class Param_window(QtWidgets.QMainWindow):
             self.gridLayout.itemAt(i).widget().deleteLater()
 
         # title
-        label = QtWidgets.QLabel(self.centralwidget)
+        label = QLabel(self.centralwidget)
         label.setText("idx")
         label.setStyleSheet("background-color: rgb(0, 51, 102);")
         label.setAlignment(QtCore.Qt.AlignCenter)
         self.gridLayout.addWidget(label, 0, 0, 1, 1)
 
-        label = QtWidgets.QLabel(self.centralwidget)
+        label = QLabel(self.centralwidget)
         label.setText("score")
         label.setStyleSheet("background-color: rgb(0, 51, 102);")
         label.setAlignment(QtCore.Qt.AlignCenter)
         self.gridLayout.addWidget(label, 0, 1, 1, 1)
 
-        label = QtWidgets.QLabel(self.centralwidget)
+        label = QLabel(self.centralwidget)
         label.setText("param value")
         label.setStyleSheet("background-color: rgb(0, 51, 102);")
         label.setAlignment(QtCore.Qt.AlignCenter)
@@ -82,51 +92,51 @@ class Param_window(QtWidgets.QMainWindow):
 
 
         for i in range(popsize):
-            label = QtWidgets.QLabel(self.centralwidget)
+            label = QLabel(self.centralwidget)
             label.setText(str(i))
             label.setStyleSheet("background-color: rgb(255, 234, 0); color: rgb(0, 0, 0);")
             label.setAlignment(QtCore.Qt.AlignCenter)
             self.gridLayout.addWidget(label, i+1, 0, 1, 1)
 
         for i, IQM_name in enumerate(IQM_names):
-            label = QtWidgets.QLabel(self.centralwidget)
+            label = QLabel(self.centralwidget)
             label.setText(IQM_name)
             label.setStyleSheet("background-color: rgb(0, 51, 102);")
             label.setAlignment(QtCore.Qt.AlignCenter)
             self.gridLayout.addWidget(label, 0, param_change_num+2+i, 1, 1)
 
-        if len(IQM_names):
-            label = QtWidgets.QLabel(self.centralwidget)
-            label.setText("推到手機")
-            label.setStyleSheet("background-color: rgb(0, 51, 102);")
-            label.setAlignment(QtCore.Qt.AlignCenter)
-            self.gridLayout.addWidget(label, 0, param_change_num+2+len(IQM_names), 1, 1)
+        # if len(IQM_names):
+        #     label = QLabel(self.centralwidget)
+        #     label.setText("推到手機")
+        #     label.setStyleSheet("background-color: rgb(0, 51, 102);")
+        #     label.setAlignment(QtCore.Qt.AlignCenter)
+        #     self.gridLayout.addWidget(label, 0, param_change_num+2+len(IQM_names), 1, 1)
 
         # score label
         for i in range(popsize):
             label_trial_denorm = []
             label_IQM = []
             for j in range(param_change_num):
-                label = QtWidgets.QLabel(self.centralwidget)
+                label = QLabel(self.centralwidget)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 label_trial_denorm.append(label)
                 self.gridLayout.addWidget(label, i+1, j+2, 1, 1)
             self.label_trial_denorm.append(label_trial_denorm)
 
-            label = QtWidgets.QLabel(self.centralwidget)
+            label = QLabel(self.centralwidget)
             label.setAlignment(QtCore.Qt.AlignCenter)
             self.gridLayout.addWidget(label, i+1, 1, 1, 1)
             self.label_score.append(label)
 
             for j in range(len(IQM_names)):
-                label = QtWidgets.QLabel(self.centralwidget)
+                label = QLabel(self.centralwidget)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 label_IQM.append(label)
                 self.gridLayout.addWidget(label, i+1, self.param_change_num+2+j, 1, 1)
             self.label_IQM.append(label_IQM)
 
-            if len(IQM_names):
-                self.gridLayout.addWidget(Push_Btn(i, self.push_to_phone_signal), i+1, param_change_num+2+len(IQM_names), 1, 1)
+            # if len(IQM_names):
+            #     self.gridLayout.addWidget(Push_Btn(i, self.push_to_phone_signal), i+1, param_change_num+2+len(IQM_names), 1, 1)
 
 
     
@@ -150,7 +160,7 @@ class Param_window(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     import sys
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     # IQM_names = []
     IQM_names = ["sharpness", "noise"]
     popsize = 15

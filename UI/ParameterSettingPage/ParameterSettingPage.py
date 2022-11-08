@@ -77,7 +77,7 @@ class ParameterSettingPage(QWidget):
         self.setStyleSheet(
             "QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"
             "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
-            "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}"
+            "QLineEdit{font-size:10pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}"
         )
     
     def reset_UI(self):
@@ -87,15 +87,17 @@ class ParameterSettingPage(QWidget):
 
     def update_UI(self):
         self.logger = self.ui.logger
-        root, key = self.ui.data["page_root"], self.ui.data["page_key"]
+        self.data = self.ui.data
+        self.config = self.ui.config
+
+        root, key = self.data["page_root"], self.data["page_key"]
+        self.logger.signal.emit('Change param page to {}/{}'.format(root, key))
         self.ISP_tree.update_UI()
         self.param_modify_block.update_UI(root, key)
         self.param_range_block.update_UI(root, key)
         self.hyper_setting_block.update_UI()
         self.push_and_save_block.update_UI()
 
-        self.data = self.ui.data
-        self.config = self.ui.config
         if "project_path" in self.data and os.path.exists(self.data["project_path"]):
             self.set_project(self.data["project_path"])
 

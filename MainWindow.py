@@ -97,8 +97,9 @@ class MainWindow(QMainWindow):
         self.tuning.setup_param_window_signal.connect(self.setup_param_window)
         # logger
         self.tuning.log_info_signal.connect(self.logger.show_info)
-
-        #logger
+        self.tuning.run_cmd_signal.connect(self.logger.run_cmd)
+        # ML
+        self.tuning.ML.log_info_signal.connect(self.logger.show_info)
 
     def read_config(self):
         with open('config.json') as f:
@@ -129,6 +130,10 @@ class MainWindow(QMainWindow):
     ##### param_window #####
 
     def closeEvent(self, event):
+        if self.tuning.is_run: self.run_page.upper_part.finish()
+        if self.param_window: self.param_window.close()
+        if self.tuning.ML: self.tuning.ML.save_model()
+
         print('window close')
         self.setting.write_setting()
 

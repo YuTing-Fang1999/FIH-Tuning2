@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSignal, QThread, QObject
 from .HyperOptimizer import HyperOptimizer
 from .MplCanvasTiming import MplCanvasTiming
 from .ImageMeasurement import *
+from myPackage.ML.ML import ML
 
 import numpy as np
 from time import sleep
@@ -14,6 +15,8 @@ import os
 import sys
 import cv2
 import math
+import torch
+import threading
 
 class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     finish_signal = pyqtSignal()
@@ -28,6 +31,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     update_param_window_signal = pyqtSignal(int, np.ndarray, float, np.ndarray)
     # logger
     log_info_signal = pyqtSignal(str)
+    run_cmd_signal = pyqtSignal(str)
 
     def __init__(self, run_page_plot, data, config, capture):
         super().__init__()
@@ -39,6 +43,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.TEST_MODE = False
         self.pretrain = False
         self.train = False
+        self.ML = ML()
 
         self.calFunc = {}
         self.calFunc["sharpness"] = get_sharpness
@@ -47,28 +52,25 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # plot
         self.bset_score_plot = MplCanvasTiming(
-            self.run_page_plot.tab_score.label_plot, color=['r', 'g'], label=['score'], axis_name=["Generation * Popsize", "Score"]
+            self.run_page_plot.tab_score.label_plot, color=['r', 'g'], name=['score'], axis_name=["Generation", "Score"]
         )
         self.hyper_param_plot = MplCanvasTiming(
-            self.run_page_plot.tab_hyper.label_plot, color=['g', 'r'], label=['F', 'Cr'], axis_name=["Generation * Popsize", "HyperParam Value"]
+            self.run_page_plot.tab_hyper.label_plot, color=['g', 'r'], name=['F', 'Cr'], axis_name=["Generation", "HyperParam Value"]
         )
         self.loss_plot = MplCanvasTiming(
-            self.run_page_plot.tab_loss.label_plot, color=['b'], label=['loss'], axis_name=["Epoch/10", "Loss"]
+            self.run_page_plot.tab_loss.label_plot, color=['b','g', 'r'], name=['loss'], axis_name=["Epoch/10", "Loss"]
         )
         self.update_plot = MplCanvasTiming(
-            self.run_page_plot.tab_update.label_plot, color=['b', 'k'], label=['using ML', 'no ML'], axis_name=["Generation", "Update Rate"]
+            self.run_page_plot.tab_update.label_plot, color=['b', 'k'], name=['using ML', 'no ML'], axis_name=["Generation", "Update Rate"]
         )
 
     def run(self):
-        self.log_info_signal.emit("start")
-
         self.TEST_MODE = self.data["TEST_MODE"]
         self.pretrain = self.data["pretrain"]
         self.train = self.data["train"]
+        self.log_info_signal.emit('self.TEST_MODE = {}'.format(self.TEST_MODE))
 
         ##### param setting #####
-        self.log_info_signal.emit('self.TEST_MODE = {}'.format(self.TEST_MODE))
-        # print('self.TEST_MODE =', self.TEST_MODE)
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
@@ -81,14 +83,18 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.finish_signal.emit()
             sys.exit()
 
+        self.exe_path = self.data["exe_path"]
+        self.project_path = self.data["project_path"]
+        self.bin_name = self.data["bin_name"]
 
         # hyperparams
         self.popsize = self.data['population size']
         self.generations = self.data['generations']
         self.capture_num = self.data['capture num']
-        self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.5, method="exponantial_reverse", rate = 0.05)
+        # self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.5, method="exponantial_reverse", rate = 0.05)
         # self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.5, method="exponantial", rate=0.2)
         self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
+        self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
         
         # params
         self.param_names = config['param_names']
@@ -101,10 +107,11 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         if self.TEST_MODE: self.param_value = np.zeros(self.dimensions)
 
         # target score
-        self.type_IQM = np.array(self.data["target_type"])
+        self.target_type = np.array(self.data["target_type"])
         self.target_IQM = np.array(self.data["target_score"])
         self.weight_IQM = np.array(self.data["target_weight"])
-        self.std_IQM=np.ones([len(self.type_IQM)])
+        self.loss_plot.setup(self.target_type)
+        # self.std_IQM=np.ones([len(self.type_IQM)])
 
         # target region
         self.roi = self.data['roi']
@@ -124,16 +131,37 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.fitness = []  # 計算popsize個individual所產生的影像的分數
         self.IQMs = []
 
+        # update rate
+        self.update_count=0
+        self.ML_update_count=0
+        self.update_rate=0
+        self.ML_update_rate=0
+
+        
+
         ##### start tuning #####
         # setup
         self.setup()
 
         self.initial_individual()
 
+        # ML
+        self.ML.reset(
+            TEST_MODE = self.TEST_MODE,
+            key = self.data["page_key"],
+            target_type = self.target_type,
+            std_IQM = self.std_IQM,
+            loss_plot=self.loss_plot, 
+            PRETRAIN_MODEL=self.pretrain, 
+            TRAIN=self.train, 
+            input_dim=self.dimensions, 
+            output_dim=len(self.target_type)
+        )
+
         # Do Differential Evolution
         for gen_idx in range(self.generations):
             self.run_DE_for_a_generation(gen_idx)
-            
+        
         self.finish_signal.emit()
 
 
@@ -154,7 +182,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # trial_denorm = np.around(trial_denorm, 4)
 
             # measure score
-            now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx), self.param_value)
+            now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             self.log_info_signal.emit('now IQM {}'.format(now_IQM))
@@ -169,8 +197,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 self.update_best_score(ind_idx, self.fitness[ind_idx])
 
         self.IQMs = np.array(self.IQMs)
-        std_IQM = self.IQMs.std(axis=0)
-        print('std_IQM',std_IQM)
+        self.std_IQM = self.IQMs.std(axis=0)
+        print('std_IQM',self.std_IQM)
 
     def run_DE_for_a_generation(self, gen_idx):
         self.set_generation_signal.emit(str(gen_idx))
@@ -183,52 +211,66 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         F = self.F_optimiter.update(gen_idx)
         Cr = self.Cr_optimiter.update(gen_idx)
 
+        self.update_count=0
+        self.ML_update_count=0
+
         for ind_idx in range(self.popsize):
             self.run_DE_for_a_individual(F, Cr, gen_idx, ind_idx, gen_dir)
+        self.update_rate=self.update_count/self.popsize
+        self.ML_update_rate=self.ML_update_count/self.popsize
+        
 
     def run_DE_for_a_individual(self, F, Cr, gen_idx, ind_idx, gen_dir):
         self.set_individual_signal.emit(str(ind_idx))
 
-        # select all pop except j
-        idxs = [idx for idx in range(self.popsize) if idx != ind_idx]
-        # random select three pop except j
-        a, b, c = self.pop[np.random.choice(idxs, 3, replace=False)]
+        trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+        # update param_value
+        self.param_value[self.param_change_idx] = trial_denorm
 
-        # Mutation
-        mutant = np.clip(a + F * (b - c), 0, 1)
+        if self.TEST_MODE:
+            # mesure score
+            # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
+            now_IQM = self.measure_score_by_param_value('{}/{}'.format(gen_dir, ind_idx), self.param_value, train=False)
+            f = np.around(self.cal_score_by_weight(now_IQM), 9)
+            # self.log_info_signal.emit("now IQM {}".format(now_IQM))
+            # self.log_info_signal.emit("now fitness {}".format(f))
+            if (self.pretrain or self.train) and f < self.fitness[ind_idx]: self.update_count+=1
 
-        # random choose the dimensions
-        cross_points = np.random.rand(self.param_change_num) < Cr
-        # if no dimensions be selected
-        if not np.any(cross_points):
-            # random choose one dimensions
-            cross_points[np.random.randint(0, self.param_change_num)] = True
-
-        # random substitution mutation
-        trial = np.where(cross_points, mutant, self.pop[ind_idx])
-        trial = np.around(trial, 4)
-
-        # denormalize to [min_b, max_b]
-        trial_denorm = self.min_b + trial * self.diff
-        # trial_denorm = np.around(trial_denorm, 4)
-
+        # use model to predict
+        if (self.pretrain or self.train) and gen_idx>=self.ML.pred_idx:
+            times = 0
+            while self.is_bad(trial, ind_idx) and times<50:
+                trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+                times+=1
+            self.log_info_signal.emit("times: {}".format(times))                
+            
         # update param_value
         self.param_value[self.param_change_idx] = trial_denorm
 
         # mesure score
-        print('\n\ngenerations:', gen_idx, 'individual:', ind_idx)
-        now_IQM = self.measure_score_by_param_value('{}/{}'.format(gen_dir, ind_idx), self.param_value)
+        # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
+        now_IQM = self.measure_score_by_param_value('{}/{}'.format(gen_dir, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
         f = np.around(self.cal_score_by_weight(now_IQM), 9)
-        print('now IQM', now_IQM)
-        print('now fitness', f)
+        # self.log_info_signal.emit("now IQM {}".format(now_IQM))
+        # self.log_info_signal.emit("now fitness {}".format(f))
+
+        # update dataset
+        if (self.pretrain or self.train):
+            x = np.zeros(self.dimensions)
+            x[self.param_change_idx] = trial - self.pop[ind_idx]
+            y = now_IQM - self.IQMs[ind_idx]
+            self.ML.update_dataset(x, y)
 
         # 如果突變種比原本的更好
         if f < self.fitness[ind_idx]:
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, f, now_IQM)
+            
+            if (self.pretrain or self.train): self.ML_update_count+=1
+            else: self.update_count+=1
 
             # 替換原本的個體
-            print('replace with better score', f)
+            self.log_info_signal.emit('replace with better score {}'.format(f))
             self.set_statusbar_signal.emit('generation {} individual {} replace with better score'.format(gen_dir, ind_idx))
             
             self.fitness[ind_idx] = f
@@ -260,6 +302,50 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         self.bset_score_plot.update([self.best_score])
         self.hyper_param_plot.update([F, Cr])
+        self.update_plot.update([self.ML_update_rate, self.update_rate])
+
+    def start_ML_train(self):
+        # print('ML train')
+        # 建立一個子執行緒
+        self.train_task = threading.Thread(target = lambda: self.ML.train())
+        # 當主程序退出，該執行緒也會跟著結束
+        self.train_task.daemon = True
+        # 執行該子執行緒
+        self.train_task.start()
+
+    def is_bad(self, trial, ind_idx):
+        x = np.zeros(self.dimensions)
+        x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
+        diff_target_IQM = self.IQMs[ind_idx] - self.target_IQM # 目標差
+        pred_dif_IQM = self.ML.predict(x)
+        return (pred_dif_IQM * self.weight_IQM * diff_target_IQM < 0).all()
+
+
+    def generate_parameters(self, ind_idx, F, Cr):
+        # select all pop except j
+        idxs = [idx for idx in range(self.popsize) if idx != ind_idx]
+        # random select three pop except j
+        a, b, c = self.pop[np.random.choice(idxs, 3, replace=False)]
+
+        # Mutation
+        mutant = np.clip(a + F * (b - c), 0, 1)
+
+        # random choose the dimensions
+        cross_points = np.random.rand(self.param_change_num) < Cr
+        # if no dimensions be selected
+        if not np.any(cross_points):
+            # random choose one dimensions
+            cross_points[np.random.randint(0, self.param_change_num)] = True
+
+        # random substitution mutation
+        trial = np.where(cross_points, mutant, self.pop[ind_idx])
+        trial = np.around(trial, 4)
+
+        # denormalize to [min_b, max_b]
+        trial_denorm = self.min_b + trial * self.diff
+        # trial_denorm = np.around(trial_denorm, 4)
+
+        return trial, trial_denorm
 
 
     def update_best_score(self, idx, score):
@@ -274,16 +360,21 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # self.update_param_window_signal.emit(idx, pop_denorm[idx], fitness[idx], now_IQM)
         
 
-    def measure_score_by_param_value(self, path, param_value):
+    def measure_score_by_param_value(self, path, param_value, train):
 
-        print('param_value =', param_value)
-        if self.TEST_MODE: return np.array([self.fobj(param_value)]*len(self.type_IQM))
+        # print('param_value =', param_value)
+        if self.TEST_MODE: 
+            if train:
+                self.start_ML_train()
+                self.train_task.join()
+            return np.array([self.fobj(param_value)]*len(self.target_type))
 
         # write param_value to xml
         self.setParamToXML(param_value)
 
         # compile project using bat. push bin code to camera
         self.buildAndPushToCamera()
+        if self.train and train: self.start_ML_train()
         sleep(6)
 
         # 拍照
@@ -291,6 +382,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # 計算分數
         now_IQM = self.measure_score_by_multiple_capture(path)
+
+        # 等ML train完再繼續
+        if self.train and train: self.train_task.join()
         
         return now_IQM
 
@@ -325,12 +419,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         tree.write(self.xml_path, encoding='UTF-8', xml_declaration=True)
 
     def buildAndPushToCamera(self):
-        print('push bin to camera...')
-        os.system('adb shell input keyevent = KEYCODE_HOME')
-        v1 = self.data["exe_path"]
-        v2 = self.data["project_path"]
-        v3 = self.data["bin_name"]
-        os.system("build_and_push.bat {} {} {}".format(v1, v2, v3))
+        self.log_info_signal.emit('push bin to camera...')
+        self.run_cmd_signal.emit('adb shell input keyevent = KEYCODE_HOME')
+        self.run_cmd_signal.emit("build_and_push.bat {} {} {}".format(self.exe_path, self.project_path, self.bin_name))
         self.capture.clear_camera_folder()
 
     def measure_score_by_multiple_capture(self, path):
@@ -367,7 +458,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if len(roi)==0: continue
             x, y, w, h = roi
             roi_img = img[y: y+h, x:x+w]
-            now_IQM.append(self.calFunc[self.type_IQM[i]](roi_img))
+            now_IQM.append(self.calFunc[self.target_type[i]](roi_img))
         
         now_IQM = np.array(now_IQM)
         return now_IQM
@@ -388,45 +479,45 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # reset plot
         self.bset_score_plot.reset()
         self.hyper_param_plot.reset()
-        # self.loss_plot.reset()
-        # self.update_plot.reset()
+        self.loss_plot.reset()
+        self.update_plot.reset()
 
         # reset label
         self.set_score_signal.emit("#")
         self.set_generation_signal.emit("#")
         self.set_individual_signal.emit("#")
 
-        self.setup_param_window_signal.emit(self.popsize, self.param_change_num, self.type_IQM)
+        self.setup_param_window_signal.emit(self.popsize, self.param_change_num, self.target_type)
 
-    def push_to_phone(self, idx):
-        if self.TEST_MODE:
-            QMessageBox.about(self, "info", "TEST_MODE下不可推")
-            print("TEST_MODE下不可推")
-        # QMessageBox.about(self, "info", "功能未完善")
-        # return
+    # def push_to_phone(self, idx):
+    #     if self.TEST_MODE:
+    #         QMessageBox.about(self, "info", "TEST_MODE下不可推")
+    #         print("TEST_MODE下不可推")
+    #     # QMessageBox.about(self, "info", "功能未完善")
+    #     # return
 
-        if idx>=len(self.fitness):
-            QMessageBox.about(self, "info", "目前無參數可推")
-            return
+    #     if idx>=len(self.fitness):
+    #         QMessageBox.about(self, "info", "目前無參數可推")
+    #         return
 
-        if self.is_run:
-            QMessageBox.about(self, "info", "程式還在執行中\n請按stop停止\n或等執行完後再推")
-            return
+    #     if self.is_run:
+    #         QMessageBox.about(self, "info", "程式還在執行中\n請按stop停止\n或等執行完後再推")
+    #         return
         
-        # get normalized parameters
-        trial = self.pop[idx]
-        # denormalize to [min_b, max_b]
-        trial_denorm = self.min_b + trial * self.diff
-        # update param_value
-        self.param_value[self.param_change_idx] = trial_denorm
+    #     # get normalized parameters
+    #     trial = self.pop[idx]
+    #     # denormalize to [min_b, max_b]
+    #     trial_denorm = self.min_b + trial * self.diff
+    #     # update param_value
+    #     self.param_value[self.param_change_idx] = trial_denorm
 
-        self.setParamToXML(self.param_value)
-        # 使用bat編譯，將bin code推入手機
-        self.buildAndPushToCamera()
+    #     self.setParamToXML(self.param_value)
+    #     # 使用bat編譯，將bin code推入手機
+    #     self.buildAndPushToCamera()
 
-        print('push individual', idx, 'to phone')
-        print('param_value =', self.param_value)
-        print("成功推入手機")
+    #     print('push individual', idx, 'to phone')
+    #     print('param_value =', self.param_value)
+    #     print("成功推入手機")
 
     # Ackley
     # objective function

@@ -112,15 +112,12 @@ class UpperPart(QWidget):
     def run(self):
         print('click run btn')
         if self.tuning.is_run:
-            print("STOP")
             self.finish()
-            stop_thread(self.tuning_task)
-
         else:
-            print("Run")
             self.start()
 
     def start(self):
+        self.ui.logger.signal.emit("START")
         if not self.setting.set_data(): return
 
         self.tuning.is_run = True
@@ -142,9 +139,12 @@ class UpperPart(QWidget):
         self.tuning_task.start()
 
     def finish(self):
+        self.ui.logger.signal.emit("STOP")
         self.tuning.is_run = False
         self.btn_run.setText('Run')
         self.mytimer.stopTimer()
+        self.tuning.ML.save_model()
+        stop_thread(self.tuning_task)
 
     def show_param_window(self):
         self.ui.param_window.close()
@@ -158,6 +158,7 @@ def _async_raise(tid, exctype):
         exctype = type(exctype)
     res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
     if res == 0:
+        return
         raise ValueError("invalid thread id")
     elif res != 1:
         # """if it returns a number greater than one, you're in trouble,

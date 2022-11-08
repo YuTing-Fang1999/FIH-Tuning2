@@ -3,10 +3,13 @@ from PyQt5.QtWidgets import (
     QMainWindow, QMessageBox, QToolButton,
     QVBoxLayout, QScrollArea, QSplitter
 )
+from PyQt5.QtCore import pyqtSignal
 import sys
 import subprocess
 
 class Logger(QWidget):
+    signal = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
         VLayout = QVBoxLayout(self)
@@ -21,6 +24,8 @@ class Logger(QWidget):
         self.Vscroll_bar = scroll.verticalScrollBar()
         self.Vscroll_bar.rangeChanged.connect(self.scroll_range_changed_handler)
         self.scroll_falg = False
+
+        self.signal.connect(self.show_info)
 
         self.setStyleSheet(
             """
@@ -53,28 +58,29 @@ class Logger(QWidget):
         :param shell: 是否開啟shell
         :return: 子進程狀態碼和執行結果
         """
-        self.show_info('************** START **************')
-        self.show_info(cmd)
+        self.signal.emit('************** START **************')
+        self.signal.emit(cmd)
         try:
             p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except:
-            self.show_info("指令錯誤")
-            self.show_info('************** FAILED **************')
+            self.signal.emit("指令錯誤")
+            self.signal.emit('************** FAILED **************')
             return -1, ""
         result = []
         while p.poll() is None:
             line = p.stdout.readline().strip()
             if line:
+                line = _decode_data(line)
                 result.append(line)
-                self.show_info(_decode_data(line))
+                self.signal.emit(line)
             # 清空緩存
             sys.stdout.flush()
             sys.stderr.flush()
         # 判斷返回碼狀態
         if p.returncode == 0:
-            self.show_info('************** SUCCESS **************')
+            self.signal.emit('************** SUCCESS **************')
         else:
-            self.show_info('************** FAILED **************')
+            self.signal.emit('************** FAILED **************')
 
         return p.returncode, '\r\n'.join(result)
 

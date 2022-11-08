@@ -73,4 +73,3 @@ class TriggerSelector(QComboBox):
         self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
         self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])
 
-        self.logger.show_info("Successfully load {}".format(self.data["project_name"]))

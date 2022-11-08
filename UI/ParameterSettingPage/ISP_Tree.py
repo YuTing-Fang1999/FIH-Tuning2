@@ -17,12 +17,13 @@ class ISP_Tree(QWidget):
     def __init__(self, ui):
         super().__init__()
         self.ui = ui
+        self.HLayout = QHBoxLayout(self)
+
         self.setup_UI()
         self.setup_controller()
 
     def setup_UI(self):
-        self.HLayout = QHBoxLayout(self)
-
+        
         self.tree=QTreeWidget()
         self.tree.setHeaderHidden( True )
         self.tree.hide()
@@ -30,6 +31,12 @@ class ISP_Tree(QWidget):
 
         self.btn_toggle_open = ButtonToggleOpen()                                     
         self.HLayout.addWidget(self.btn_toggle_open)
+
+    # def reset_UI(self):
+    #     # delete
+    #     for i in range(self.HLayout.count()):
+    #         self.HLayout.itemAt(i).widget().deleteLater()
+    #     self.setup_UI()
 
     def update_UI(self):
         self.data = self.ui.data
@@ -68,7 +75,7 @@ class ISP_Tree(QWidget):
 
         root = item.parent().text(0)
         key = item.text(0)
-        print('change param page to', root, key)
+        self.ui.logger.signal.emit('Change param page to {}/{}'.format(root, key))
         self.page.param_modify_block.update_UI(root, key)
         self.page.param_range_block.update_UI(root, key)
         self.data["page_root"] = root

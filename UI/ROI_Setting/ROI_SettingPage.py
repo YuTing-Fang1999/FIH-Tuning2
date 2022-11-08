@@ -150,7 +150,7 @@ class ROI_SettingPage(QWidget):
     
     def add_ROI_item_click(self):
         if len(self.ROI_select_window.my_viewer.img)==0:
-            self.alert_info_signal.emit("未拍攝照片", "請先固定好拍攝位置，再按拍攝鈕拍攝拍攝照片")
+            self.alert_info_signal.emit("未拍攝照片", "請先固定好拍攝位置，按拍攝鈕拍攝拍攝照片後，再選取區域")
             return
         
         if len(self.ROI_select_window.target_viewer.img)==0:
@@ -169,8 +169,8 @@ class ROI_SettingPage(QWidget):
                 x, y, w, h = roi
                 # 隨機產生顏色
                 color = [random.randint(0, 255), random.randint(0, 255),random.randint(0, 255)]
-                cv2.rectangle(img_select, (x, y), (x+w, y+h), color, 3)
-                cv2.putText(img_select, text=str(i+1), org=(x+w//2, y+h//2), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=min(w//50,h//50), color=color, thickness=min(w//500,h//500)+1)
+                cv2.rectangle(img_select, (x, y), (x+w, y+h), color, 10)
+                cv2.putText(img_select, text=str(i+1), org=(x+w//2, y+h//2), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=min(w//50,h//50)+1, color=color, thickness=min(w//50,h//50)+1)
 
             self.label_img.setPhoto(img_select)
             self.ROI_select_window.my_viewer.set_img(img_select)

@@ -228,7 +228,7 @@ class ROI_Select_Window(QtWidgets.QWidget):
         self.target_viewer = ImageViewer(self, 1)
         self.label = QtWidgets.QLabel(self)
         self.label.setAlignment(Qt.AlignCenter)
-        self.label.setText('按下Ctrl可以使用滑鼠縮放拖曳\n滑鼠點擊可選擇整張照片\n對左邊的圖操作可同時操作兩張圖')
+        self.label.setText('按下Ctrl可以使用滑鼠縮放拖曳\n左圖為拍攝的照片，右圖為目標照片\n對左邊的圖操作可同時操作兩張圖')
         self.btn_OK = QtWidgets.QPushButton(self)
         self.btn_OK.setText("OK")
         # Arrange layout
@@ -247,8 +247,8 @@ class ROI_Select_Window(QtWidgets.QWidget):
 
         self.setStyleSheet(
             "QWidget{background-color: rgb(66, 66, 66);}"
-            "QLabel{font-size:20pt; font-family:微軟正黑體; color:white;}"
-            "QPushButton{font-size:20pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}")
+            "QLabel{font-size:12pt; font-family:微軟正黑體; color:white;}"
+            "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}")
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         if event.key() == Qt.Key_Control:

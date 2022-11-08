@@ -113,7 +113,8 @@ class MainWindow(QMainWindow):
         if self.tuning.is_run: self.run_page.upper_part.mytimer.continueTimer()
 
     def alert_info(self, title, text):
-        print(title)
+        # print(title)
+        self.logger.signal.emit(text)
         QMessageBox.about(self, title, text)
 
     def set_statusbar(self, text):

@@ -38,7 +38,15 @@ class PlatformSelecter(QWidget):
         self.data = self.ui.data
         self.data["platform"]=self.rb1.text()
 
+    def reset_project(self):
+        if "project_path" in self.data:
+            self.data.pop('project_path') 
+
+        self.ui.project_setting_page.label_project_path.setText("")
+        self.ui.parameter_setting_page.reset_UI()
+
     def onButtonGroup1Click(self):
+        self.reset_project()
         if self.buttongroup1.checkedId() == 1:
             self.type = self.rb1.text()
             print(self.type)

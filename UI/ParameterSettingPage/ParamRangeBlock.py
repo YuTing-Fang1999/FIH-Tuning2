@@ -63,6 +63,11 @@ class ParamRangeBlock(QWidget):
         self.VLayout = QVBoxLayout(self)
         self.VLayout.setContentsMargins(0, 0, 0, 0)
 
+    def reset_UI(self):
+        # delete
+        for i in range(self.VLayout.count()):
+            self.VLayout.itemAt(i).widget().deleteLater()
+
     def update_UI(self, root, key):
         self.data = self.ui.data
         self.config = self.ui.config
@@ -73,9 +78,7 @@ class ParamRangeBlock(QWidget):
         self.root = root
         self.key = key
 
-        # delete
-        for i in range(self.VLayout.count()):
-            self.VLayout.itemAt(i).widget().deleteLater()
+        self.reset_UI()
 
         self.param_range_items = []
         for i in range(len(config["title"])):

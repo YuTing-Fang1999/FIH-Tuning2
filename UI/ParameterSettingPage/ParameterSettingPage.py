@@ -79,6 +79,11 @@ class ParameterSettingPage(QWidget):
             "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
             "QLineEdit{font-size:12pt; font-family:微軟正黑體; background-color: rgb(255, 255, 255); border: 2px solid gray; border-radius: 5px;}"
         )
+    
+    def reset_UI(self):
+        self.trigger_selector.clear()
+        self.param_modify_block.reset_UI()
+        self.param_range_block.reset_UI()
 
     def update_UI(self):
         self.logger = self.ui.logger
@@ -138,6 +143,7 @@ class ParameterSettingPage(QWidget):
         if not os.path.exists(xml_path):
             self.logger.show_info('Return because no such file: '+xml_path)
             self.logger.show_info("請確認是否為"+self.data["platform"])
+            self.ui.project_setting_page.label_project_path.setText("請確認"+self.data["project_path"]+"是否為"+self.data["platform"])
             return
 
         tree = ET.parse(xml_path)
@@ -160,7 +166,11 @@ class ParameterSettingPage(QWidget):
             data.append(aec_trigger.find("gain_end").text)
             aec_trigger_datas.append(data)
 
+        self.param_modify_block.update_UI(self.data["page_root"],self.data["page_key"])
+        self.param_range_block.update_UI(self.data["page_root"],self.data["page_key"])
         self.trigger_selector.update_UI(aec_trigger_datas)
+        self.logger.show_info("Load {} Successfully".format(self.data["project_name"]))
+
 
 
     

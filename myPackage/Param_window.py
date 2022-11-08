@@ -134,7 +134,7 @@ class Param_window(QtWidgets.QMainWindow):
         self.fitness[idx] = score
         self.label_score[idx].setText(str(np.round(score, 5)))
         for j in range(self.param_change_num):
-            self.label_trial_denorm[idx][j].setText(str(trial_denorm[j]))
+            self.label_trial_denorm[idx][j].setText(str(np.round(trial_denorm[j], 4)))
 
         order = np.argsort(self.fitness)
         # print(order)

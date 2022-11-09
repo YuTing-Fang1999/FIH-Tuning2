@@ -17,7 +17,7 @@ class Capture(QWidget):
         super().__init__()
         self.logger = logger
         self.CAMERA_DEBUG = False
-        self.CAMERA_PATH = '/sdcard/DCIM/Camera/'
+        self.CAMERA_PATH = '/sdcard/DCIM/Camera/*'
         self.state = threading.Condition()
 
     def capture(self, path = "", focus_time = 4, save_time = 1, capture_num = 1):
@@ -39,7 +39,8 @@ class Capture(QWidget):
     def clear_camera_folder(self):
         #delete from phone: adb shell rm self.CAMERA_PATH/*
         self.log_info_signal.emit('\nclear_camera_folder')
-        rc, r = self.logger.run_cmd("adb shell rm -rf {} *".format(self.CAMERA_PATH))
+        ######## 注意不要誤刪到系統!!!!! ########
+        rc, r = self.logger.run_cmd("adb shell rm -rf {}".format(self.CAMERA_PATH))
         # if rc!=0: return
 
     def press_camera_button(self):

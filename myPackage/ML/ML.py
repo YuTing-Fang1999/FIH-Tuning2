@@ -94,9 +94,9 @@ class ML(QWidget):
                 if os.path.exists(path):
                     self.models[t].load_state_dict(torch.load(path))
                     self.optimizers[t] = torch.optim.AdamW(self.models[t].parameters(), lr=1e-7)
-                    self.log_info_signal.emit("\nLoad pretrain model: {}\n".format(path))
+                    self.log_info_signal.emit("Load pretrain model: {}".format(path))
                 else:
-                    self.log_info_signal.emit("\n找不到pretrain model: {}\n".format(path))
+                    self.log_info_signal.emit("找不到pretrain model: {}".format(path))
         
 
     def update_dataset(self, x, y):

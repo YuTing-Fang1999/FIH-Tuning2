@@ -350,7 +350,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
         pred_dif_IQM = self.ML.predict(x)
         ##### 更改判斷標準(嚴格判定) #####
-        return (pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0).any()
+        print()
+        return np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0)>=2
 
 
     def generate_parameters(self, ind_idx, F, Cr):

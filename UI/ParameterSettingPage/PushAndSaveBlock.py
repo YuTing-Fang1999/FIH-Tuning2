@@ -15,9 +15,8 @@ class CaptureWorker(QThread):
 
     def run(self):
         self.set_btn_enable_signal.emit(False)
-        print(self.data["saved_path"])
-        # self.capture.capture(path=self.data["saved_path"], focus_time = 2, save_time = 0.5, capture_num = 1)
-        sleep(5)
+        # print(self.data["saved_path"])
+        self.capture.capture(path=self.data["saved_path"], focus_time = 2, save_time = 0.5, capture_num = 1)
         self.set_btn_enable_signal.emit(True)
 
 class PushWorker(QThread):
@@ -30,7 +29,10 @@ class PushWorker(QThread):
 
     def run(self):
         self.set_btn_enable_signal.emit(False)
-        # self.tuning.buildAndPushToCamera(self.data["exe_path"], self.data["project_path"], self.data["bin_name"])
+        print(self.data["exe_path"])
+        print(self.data["project_path"])
+        print(self.data["bin_name"])
+        self.tuning.buildAndPushToCamera(self.data["exe_path"], self.data["project_path"], self.data["bin_name"])
         sleep(6)
         self.capture_signal.emit()
 

@@ -303,5 +303,4 @@ if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
     window = ROI_Select_Window()
-    window.measure_target(0,"")
     sys.exit(app.exec_())

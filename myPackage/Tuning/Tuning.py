@@ -115,10 +115,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.popsize = self.data['population size']
         self.generations = self.data['generations']
         self.capture_num = self.data['capture num']
-        self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.5, method="exponantial_reverse", rate = 0.05)
-        # self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.5, method="exponantial", rate=0.2)
+        # self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.6, method="exponantial_reverse", rate = 0.03)
+        # self.F_optimiter = HyperOptimizer(init_value=1.2, final_value=0.7, method="exponantial", rate=0.5)
         self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
-        # self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
+        self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
         
         # params
         self.param_names = config['param_names']
@@ -132,9 +132,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # target score
         if self.TEST_MODE:
-            self.data["target_type"]=["TEST"]
-            self.data["target_score"]=[0]
-            self.data["target_weight"]=[1]
+            self.data["target_type"]=["TEST", "TEST2", "TEST3"]
+            self.data["target_score"]=[0, 0, 0]
+            self.data["target_weight"]=[1, 1, 1]
 
         self.target_type = np.array(self.data["target_type"])
         self.target_IQM = np.array(self.data["target_score"])
@@ -349,7 +349,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
         diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
         pred_dif_IQM = self.ML.predict(x)
-        return (pred_dif_IQM * self.weight_IQM * diff_target_IQM < 0).all()
+        ##### 更改判斷標準(嚴格判定) #####
+        return (pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0).any()
 
 
     def generate_parameters(self, ind_idx, F, Cr):
@@ -404,7 +405,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.setParamToXML(param_value)
 
         # compile project using bat. push bin code to camera
-        self.buildAndPushToCamera()
+        self.buildAndPushToCamera(self.exe_path, self.project_path, self.bin_name)
         if self.TRAIN and train: self.start_ML_train()
         sleep(6)
 
@@ -449,10 +450,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # write the xml file
         tree.write(self.xml_path, encoding='UTF-8', xml_declaration=True)
 
-    def buildAndPushToCamera(self):
+    def buildAndPushToCamera(self, exe_path, project_path, bin_name):
         self.log_info_signal.emit('push bin to camera...')
         self.run_cmd_signal.emit('adb shell input keyevent = KEYCODE_HOME')
-        self.run_cmd_signal.emit("build_and_push.bat {} {} {}".format(self.exe_path, self.project_path, self.bin_name))
+        self.run_cmd_signal.emit("build_and_push.bat {} {} {}".format(exe_path, project_path, bin_name))
         self.capture.clear_camera_folder()
 
     def measure_score_by_multiple_capture(self, path):

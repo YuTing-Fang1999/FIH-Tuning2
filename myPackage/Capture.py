@@ -16,15 +16,13 @@ class Capture(QWidget):
     def __init__(self, logger):
         super().__init__()
         self.logger = logger
-        self.log_info_signal.connect(logger.show_info)
-
         self.CAMERA_DEBUG = False
         self.CAMERA_PATH = '/sdcard/DCIM/Camera/'
         self.state = threading.Condition()
 
     def capture(self, path = "", focus_time = 4, save_time = 1, capture_num = 1):
 
-        if not self.open_camera(): return
+        self.open_camera()
         sleep(focus_time) #wait fot auto focus
         # capture
         for i in range(capture_num):
@@ -36,7 +34,7 @@ class Capture(QWidget):
     def open_camera(self):
         self.log_info_signal.emit('\nopen_camera')
         rc, r = self.logger.run_cmd("adb shell am start -a android.media.action.STILL_IMAGE_CAMERA --ez com.google.assistant.extra.CAMERA_OPEN_ONLY true --ez android.intent.extra.CAMERA_OPEN_ONLY true --ez isVoiceQuery true --ez NoUiQuery true --es android.intent.extra.REFERRER_NAME android-app://com.google.android.googlequicksearchbox/https/www.google.com")
-        if rc!=0: return False
+        # if rc!=0: return False
 
     def clear_camera_folder(self):
         #delete from phone: adb shell rm self.CAMERA_PATH/*
@@ -57,11 +55,10 @@ class Capture(QWidget):
         if rc!=0: return
 
         # find the last num
-        file_names = r.decode('utf-8').split('\n')[1:capture_num+1] 
+        file_names = r.split('\n')[1:capture_num+1] 
         file_names = [f.split(' ')[-1][:-1] for f in file_names]
-        # print(file_names)
         self.log_info_signal.emit('file_names')
-        self.log_info_signal.emit(file_names)
+        self.log_info_signal.emit("{}".format(file_names))
         if file_names[0] == '':
             self.capture_fail()
             self.log_info_signal.emit('正在重新拍攝...')

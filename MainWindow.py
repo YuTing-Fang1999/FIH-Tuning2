@@ -98,11 +98,13 @@ class MainWindow(QMainWindow):
         # tuning to param window
         self.tuning.update_param_window_signal.connect(self.update_param_window)
         self.tuning.setup_param_window_signal.connect(self.setup_param_window)
-        # logger
+        # tuning logger
         self.tuning.log_info_signal.connect(self.logger.show_info)
         self.tuning.run_cmd_signal.connect(self.logger.run_cmd)
-        # ML
-        # self.tuning.ML.log_info_signal.connect(self.logger.show_info)
+        # capture logger
+        self.capture.log_info_signal.connect(self.logger.show_info)
+        # ML logger
+        self.tuning.ML.log_info_signal.connect(self.logger.show_info)
 
     def read_config(self):
         with open('config.json') as f:

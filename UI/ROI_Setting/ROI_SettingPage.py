@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from PyQt5.QtWidgets import (
     QWidget, QSpacerItem, QSizePolicy,
     QVBoxLayout, QHBoxLayout, QFrame, QGridLayout,
@@ -16,6 +16,7 @@ sys.path.append(".")
 from .ImageViewer import ImageViewer
 from .ROI_Select_Window import ROI_Select_Window
 from .MeasureWindow import MeasureWindow
+from myPackage.Capture import Capture
 import os
 import random
 
@@ -36,6 +37,22 @@ class DeleteBtn(QPushButton):
             self.page.data["roi"].pop(row)
             self.page.draw_ROI()
 
+class CaptureWorker(QThread):
+    set_photo_signal = pyqtSignal()
+    set_btn_enable_signal = pyqtSignal(bool)
+    def __init__(self, capture):
+        super().__init__()
+        self.capture = capture
+
+    def run(self):
+        self.set_btn_enable_signal.emit(False)
+        # capture 
+        img_name = 'capture'
+        self.capture.capture(img_name, focus_time = 2, save_time = 0.5, capture_num = 1)
+        self.set_photo_signal.emit()
+        self.set_btn_enable_signal.emit(True)
+        
+
 class ROI_SettingPage(QWidget):
     to_setting_signal = pyqtSignal(list, list, list)
     alert_info_signal = pyqtSignal(str, str)
@@ -45,14 +62,11 @@ class ROI_SettingPage(QWidget):
         self.ui = ui
         self.filefolder="./"
 
-        # self.label_target_type = []
-        # self.edit_target_score = []
-        # self.edit_target_weight = []
-
         self.setup_UI()
         self.setup_controller()
 
     def setup_UI(self):
+
         # Widgets
         self.label_img = ImageViewer()
         self.label_img.setAlignment(Qt.AlignCenter)
@@ -119,7 +133,6 @@ class ROI_SettingPage(QWidget):
         self.ROI_select_window.to_main_window_signal.connect(self.select_ROI)
         self.measure_window.to_main_window_signal.connect(self.set_target_score)
 
-        self.btn_capture.clicked.connect(self.do_capture)
         self.btn_add_ROI_item.clicked.connect(self.add_ROI_item_click)
         self.btn_load_target_pic.clicked.connect(self.load_target_img)
         
@@ -194,25 +207,14 @@ class ROI_SettingPage(QWidget):
         # load img
         img = cv2.imdecode(np.fromfile(file=filepath, dtype=np.uint8), cv2.IMREAD_COLOR)
         self.ROI_select_window.target_viewer.set_img(img)
-
-    def do_capture(self):
-        # capture 
-        img_name = 'capture'
-        self.capture.capture(img_name, capture_num=1)
-
-        img = cv2.imread(img_name+".jpg")
-        self.img = img
-        self.label_img.setPhoto(img)
-        self.ROI_select_window.my_viewer.set_img(img)
-        self.draw_ROI()
         
     def set_photo(self):
         img_name = './capture.jpg'
         if os.path.exists(img_name):
             # display img
             img = cv2.imread(img_name)
-            self.label_img.setPhoto(img)
             self.img = img
+            self.label_img.setPhoto(img)
             self.ROI_select_window.my_viewer.set_img(img)
             self.draw_ROI()
 
@@ -230,7 +232,11 @@ class ROI_SettingPage(QWidget):
     def update_UI(self):
         self.data = self.ui.data
         self.capture = self.ui.capture
-        
+        self.capture_worker = CaptureWorker(self.capture)
+        self.btn_capture.clicked.connect(self.capture_worker.start)
+        self.capture_worker.set_btn_enable_signal.connect(self.btn_capture.setEnabled)
+        self.capture_worker.set_photo_signal.connect(self.set_photo)
+
         self.set_photo()
 
         if 'target_type' in self.data and len(self.data["target_type"])>0:

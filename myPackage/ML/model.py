@@ -6,11 +6,11 @@ class My_Model(nn.Module):
         self.layers = nn.Sequential(
             nn.Linear(input_dim, 16, bias=False),
             nn.ReLU(),
-            nn.Linear(16, 32, bias=False),
+            nn.Linear(16, 8, bias=False),
             nn.ReLU(),
-            nn.Linear(32, 16, bias=False),
+            nn.Linear(8, 4, bias=False),
             nn.ReLU(),
-            nn.Linear(16, output_dim, bias=False),
+            nn.Linear(4, output_dim, bias=False),
         )
 
     def forward(self, x):

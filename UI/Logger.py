@@ -32,7 +32,7 @@ class Logger(QWidget):
         self.setStyleSheet(
             """
             background-color: rgb(0, 0, 0);
-            font-size:12pt; 
+            font-size:10pt; 
             font-family:微軟正黑體; 
             color:white;
             """
@@ -76,12 +76,12 @@ class Logger(QWidget):
             self.signal.emit("指令錯誤")
             self.signal.emit('************** FAILED **************')
             return -1, ""
-        # result = []
+        result = []
         while p.poll() is None:
             line = p.stdout.readline().strip()
             if line:
                 line = _decode_data(line)
-                # result.append(line)
+                result.append(line)
                 self.signal.emit(line)
             # 清空緩存
             sys.stdout.flush()
@@ -92,7 +92,7 @@ class Logger(QWidget):
         else:
             self.signal.emit('************** FAILED **************')
 
-        return p.returncode #, '\r\n'.join(result)
+        return p.returncode, '\r\n'.join(result)
 
 
 def _decode_data(byte_data: bytes):

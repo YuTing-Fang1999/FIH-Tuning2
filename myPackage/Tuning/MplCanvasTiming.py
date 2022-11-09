@@ -34,13 +34,18 @@ class MplCanvasTiming():
 
     def update(self, data):
         self.data.append(data)
+
         self.canvas.axes.cla()
 
         lines = np.array(self.data).T
+        # if self.name[0]=="TEST":
+        #     print('data', self.data)
+        #     print('lines', lines.shape)
         x = list(range(lines.shape[-1]))
         for i in range(lines.shape[0]):
-            self.canvas.axes.plot(
-                x, lines[i], color=self.color[i], label=self.name[i])
+            # print(i, x, lines[i])
+            self.canvas.axes.plot(x, lines[i], color=self.color[i], label=self.name[i])
+
         self.canvas.axes.set_xlabel(self.axis_name[0])
         self.canvas.axes.set_ylabel(self.axis_name[1])
         self.canvas.axes.legend(fontsize=15)
@@ -49,3 +54,5 @@ class MplCanvasTiming():
         self.layout.addWidget(self.canvas)
 
         if len(self.data)>=600: self.data = []
+
+    

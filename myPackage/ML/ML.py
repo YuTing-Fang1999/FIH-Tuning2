@@ -40,7 +40,7 @@ class ML(QWidget):
         super().__init__()
         self.loss_plot = loss_plot
 
-        self.epoch_n=200
+        self.epoch_n=100
         self.train_idx = 1
         self.pred_idx = 3
 
@@ -49,7 +49,7 @@ class ML(QWidget):
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        self.target_type = None
+        self.target_type = []
 
     
     def reset(self, 
@@ -107,46 +107,44 @@ class ML(QWidget):
         self.y_train.append(y.tolist())
 
     def train(self):
-        
-
-        
-        train_dataset = My_Dataset(self.x_train, self.y_train)
         bs = 2
+        train_dataset = My_Dataset(self.x_train, self.y_train)
         train_loader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
         
-        # loss_record = {}
-        # loss = {}
-        # for t in self.target_type:
-        loss_record = []
-            # self.models[t].train()
+        loss_record = {}
+        for t in self.target_type:
+            loss_record[t] = []
+            self.models[t].train()
 
         for epoch in range(self.epoch_n):
-            for t in self.target_type:
-                for x, y in train_loader:
+            for x, y in train_loader:
+                for i, t in enumerate(self.target_type):
                     output = self.models[t](x)
-                    loss = self.criterions[t](output, y)
+                    # print(y.T, output)
+                    loss = self.criterions[t](output, y.T[i].reshape(output.shape[0], 1))
                     # Compute gradient(backpropagation).
                     loss.backward()
                     # Update parameters.
                     self.optimizers[t].step()
-                    loss_record.append(loss.detach().item())
-                
+                    loss_record[t].append(loss.detach().item())
+            
             if (epoch+1) % 10 == 0:
                 mean_train_loss = []
                 for t in self.target_type:
-                    mean_train_loss.append(sum(loss_record)/len(loss_record))
+                    mean_train_loss.append(sum(loss_record[t])/len(loss_record[t]))
+                # print(mean_train_loss)
                 self.loss_plot.update(mean_train_loss)  # plot loss
 
     def predict(self, x):
         pred = []
-        for type in self.target_type:
-            self.models[type].eval()
-            pred.append(self.models[type](torch.FloatTensor(x.tolist())).detach().numpy()[0])
-        print(x, pred)
+        for t in self.target_type:
+            self.models[t].eval()
+            pred.append(self.models[t](torch.FloatTensor(x.tolist())).detach().numpy()[0])
+        # print(pred)
         return pred
 
     def save_model(self):
-        if self.target_type:
+        if len(self.target_type)>0:
             with open("dataset.json", "w") as outfile:
                 data = {}
                 data["x_train"] = list(self.x_train)
@@ -156,7 +154,7 @@ class ML(QWidget):
             for type in self.target_type:
                 path = "myPackage/ML/Model/{}/{}".format(self.key, type)
                 torch.save(self.models[type].state_dict(), path)
-                self.log_info_signal.emit("\nsave model: {}\n".format(path))
+                self.log_info_signal.emit("save model: {}".format(path))
     
 
 

@@ -2,8 +2,37 @@ from PyQt5.QtWidgets import (
     QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
     QPushButton, QLabel, QLineEdit, QCheckBox
 )
+from PyQt5.QtCore import QThread, pyqtSignal
 import xml.etree.ElementTree as ET
 from time import sleep
+
+class CaptureWorker(QThread):
+    set_btn_enable_signal = pyqtSignal(bool)
+    def __init__(self, data, capture):
+        super().__init__()
+        self.data = data
+        self.capture = capture
+
+    def run(self):
+        self.set_btn_enable_signal.emit(False)
+        print(self.data["saved_path"])
+        # self.capture.capture(path=self.data["saved_path"], focus_time = 2, save_time = 0.5, capture_num = 1)
+        sleep(5)
+        self.set_btn_enable_signal.emit(True)
+
+class PushWorker(QThread):
+    set_btn_enable_signal = pyqtSignal(bool)
+    capture_signal = pyqtSignal()
+    def __init__(self, data, tuning):
+        super().__init__()
+        self.data = data
+        self.tuning = tuning
+
+    def run(self):
+        self.set_btn_enable_signal.emit(False)
+        # self.tuning.buildAndPushToCamera(self.data["exe_path"], self.data["project_path"], self.data["bin_name"])
+        sleep(6)
+        self.capture_signal.emit()
 
 class PushAndSaveBlock(QWidget):
     def __init__(self, ui):
@@ -52,10 +81,19 @@ class PushAndSaveBlock(QWidget):
         self.data = self.ui.data
         self.config = self.ui.config
         self.tuning = self.ui.tuning
+        self.capture = self.ui.capture
         if 'saved_dir_name' in self.data:
             self.lineEdits_dir_name.setText(self.data['saved_dir_name'])
         if 'saved_img_name' in self.data:
             self.lineEdits_img_name.setText(self.data['saved_img_name'] )
+
+        self.push_worker = PushWorker(self.data, self.tuning)
+        self.capture_worker = CaptureWorker(self.data, self.capture)
+
+        self.btn_capture.clicked.connect(self.do_capture)
+        self.push_worker.capture_signal.connect(self.do_capture)
+        self.push_worker.set_btn_enable_signal.connect(self.btn_enable)
+        self.capture_worker.set_btn_enable_signal.connect(self.btn_enable)
 
     def setup_controller(self):
         self.btn_push_phone.clicked.connect(self.push_phone)
@@ -70,9 +108,7 @@ class PushAndSaveBlock(QWidget):
         param_value = self.get_param_value()
         print(param_value)
         self.setParamToXML(param_value)
-        self.tuning.buildAndPushToCamera()
-        sleep(6)
-        self.do_capture()
+        self.push_worker.start()
 
     def get_param_value(self):
         print('get ParamModifyBlock param_value')
@@ -131,6 +167,10 @@ class PushAndSaveBlock(QWidget):
         # write the xml file
         tree.write(self.xml_path, encoding='UTF-8', xml_declaration=True)
 
+    def btn_enable(self, b):
+        self.btn_capture.setEnabled(b)
+        self.btn_push_phone.setEnabled(b)
+
 
     def do_capture(self):
         self.set_data()
@@ -141,9 +181,12 @@ class PushAndSaveBlock(QWidget):
         else:
             self.ui.tuning.mkdir(dir_name)
             path = "{}/{}".format(dir_name, img_name)
+
+        self.data["saved_path"] = path
         print("PushAndSaveBlock do_capture")
         self.ui.project_setting_page.set_data()
-        self.ui.capture.capture(path=path, focus_time = 3, save_time = 0.5, capture_num = 1)
+        self.capture_worker.start()
+        # self.ui.capture.capture(path=path, focus_time = 3, save_time = 0.5, capture_num = 1)
 
     def recover_param(self):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]

@@ -80,13 +80,22 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
 
-        self.show_info_by_key(["platform"], self.data)
+        self.tab_info.show_info("\n###### Project Setting ######")
+        self.show_info_by_key(["platform", "project_path", "exe_path", "bin_name"], self.data)
+
+        self.tab_info.show_info("\n###### Target ######")
+        self.show_info_by_key(["target_type", "target_score", "target_weight"], self.data)
+
+        self.tab_info.show_info("\n###### Tuning Block ######")
         self.show_info_by_key(["page_root", "page_key"], self.data)
         self.show_info_by_key(["trigger_idx", "trigger_name"], block_data)
-        self.tab_info.show_info("")
-        self.show_info_by_key(["TEST_MODE","PRETRAIN","TRAIN", "target_type", "target_score", "target_weight"], self.data)
-        self.tab_info.show_info("")
 
+        self.tab_info.show_info("\n###### Differential evolution ######")
+        self.show_info_by_key(["population size","generations","capture num"], self.data)
+        self.show_info_by_key(["bounds","dimensions","param_change_idx"], block_data)
+
+        self.tab_info.show_info("\n###### Mode ######")
+        self.show_info_by_key(["TEST_MODE","PRETRAIN","TRAIN"], self.data)
 
     def run(self):
         self.TEST_MODE = self.data["TEST_MODE"]
@@ -132,13 +141,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # target score
         if self.TEST_MODE:
-            self.data["target_type"]=["TEST", "TEST2", "TEST3"]
-            self.data["target_score"]=[0, 0, 0]
-            self.data["target_weight"]=[1, 1, 1]
+            self.data["target_type"]=["TEST", "TEST2"]
+            self.data["target_score"]=[0]*len(self.data["target_type"])
+            self.data["target_weight"]=[1]*len(self.data["target_type"])
 
         self.target_type = np.array(self.data["target_type"])
         self.target_IQM = np.array(self.data["target_score"])
         self.weight_IQM = np.array(self.data["target_weight"])
+        self.target_num = len(self.target_type)
         self.loss_plot.setup(self.target_type)
 
         # target region
@@ -203,8 +213,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # initial individual
         for ind_idx in range(self.popsize):
             self.set_individual_signal.emit(str(ind_idx))
-            self.log_info_signal.emit('\n\ninitial individual: {}'.format(ind_idx))
-            # print('\n\ninitial individual:', ind_idx)
+            self.log_info_signal.emit('\ninitial individual: {}'.format(ind_idx))
 
             # denormalize to [min_b, max_b]
             trial_denorm = self.min_b + self.pop[ind_idx] * self.diff
@@ -218,8 +227,6 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.IQMs.append(now_IQM)
             self.log_info_signal.emit('now IQM {}'.format(now_IQM))
             self.log_info_signal.emit('now score {}'.format(self.fitness[ind_idx]))
-            # print('now IQM', now_IQM)
-            # print('now score', self.fitness[ind_idx])
 
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, self.fitness[ind_idx], now_IQM)
@@ -349,9 +356,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
         diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
         pred_dif_IQM = self.ML.predict(x)
-        ##### 更改判斷標準(嚴格判定) #####
-        print()
-        return np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0)>=2
+        ##### 更改判斷標準(good小於半數) #####
+        good_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM > 0)
+        return  good_num < np.ceil(self.target_num/2)
 
 
     def generate_parameters(self, ind_idx, F, Cr):
@@ -384,8 +391,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     def update_best_score(self, idx, score):
         # update best score
         self.best_score = np.round(score, 9)
-        print('replace with best score')
-        print('now best_idx', idx, 'now best_score', score)
+        # print('replace with best score')
+        # print('now best_idx', idx, 'now best_score', score)
         # update best score to UI
         # self.ui.statusbar.showMessage('individual {} get the better score'.format(idx), 3000)
         self.set_score_signal.emit(str(self.best_score))

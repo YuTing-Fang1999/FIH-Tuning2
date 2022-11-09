@@ -83,7 +83,7 @@ class ML(QWidget):
         for t in self.target_type:
             model =  My_Model(input_dim, 1) #.to(self.device)
             self.models[t] = model
-            self.optimizers[t] = torch.optim.AdamW(self.models[t].parameters(), lr=1e-5)
+            self.optimizers[t] = torch.optim.AdamW(self.models[t].parameters(), lr=1e-4)
             self.criterions[t] = nn.MSELoss(reduction='mean')
 
         if self.PRETRAIN:
@@ -93,7 +93,7 @@ class ML(QWidget):
                 path = "myPackage/ML/Model/{}/{}".format(self.key, t)
                 if os.path.exists(path):
                     self.models[t].load_state_dict(torch.load(path))
-                    self.optimizers[t] = torch.optim.AdamW(self.models[t].parameters(), lr=1e-7)
+                    self.optimizers[t] = torch.optim.AdamW(self.models[t].parameters(), lr=1e-6)
                     self.log_info_signal.emit("Load pretrain model: {}".format(path))
                 else:
                     self.log_info_signal.emit("找不到pretrain model: {}".format(path))
@@ -101,13 +101,14 @@ class ML(QWidget):
 
     def update_dataset(self, x, y):
         # print(x,y)
-        # if (np.abs(y)/self.std_IQM>self.select_threshold).any():
-        #     y[np.abs(y)<self.zero_threshold] = 0
-        self.x_train.append(x.tolist())
-        self.y_train.append(y.tolist())
+        if (np.abs(y)/self.std_IQM>self.select_threshold).any():
+            # y[np.abs(y)<self.zero_threshold] = 0
+            self.x_train.append(x.tolist())
+            self.y_train.append(y.tolist())
 
     def train(self):
-        bs = 2
+        # bs = 2
+        bs = 16
         train_dataset = My_Dataset(self.x_train, self.y_train)
         train_loader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
         

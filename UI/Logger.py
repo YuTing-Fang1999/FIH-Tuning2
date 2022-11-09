@@ -45,7 +45,6 @@ class Logger(QWidget):
         pre_text=self.info.text()
         print(info)
         self.info.setText(pre_text+info+'\n')
-        self.info.repaint() # 馬上顯示的方法
 
         if self.auto_scroll:
             self.scroll_falg=True

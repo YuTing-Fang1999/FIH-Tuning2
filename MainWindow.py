@@ -85,8 +85,11 @@ class MainWindow(QMainWindow):
 
     def setup_controller(self):
         self.capture.capture_fail_signal.connect(self.capture_fail)
+        # alert_info_signal
         self.setting.alert_info_signal.connect(self.alert_info)
         self.ROI_setting_page.alert_info_signal.connect(self.alert_info)
+        self.run_page.upper_part.alert_info_signal.connect(self.alert_info)
+        self.tuning.alert_info_signal.connect(self.alert_info)
         # tuning to UI
         self.tuning.finish_signal.connect(self.run_page.upper_part.finish)
         self.tuning.set_score_signal.connect(self.run_page.upper_part.set_score)
@@ -99,7 +102,7 @@ class MainWindow(QMainWindow):
         self.tuning.log_info_signal.connect(self.logger.show_info)
         self.tuning.run_cmd_signal.connect(self.logger.run_cmd)
         # ML
-        self.tuning.ML.log_info_signal.connect(self.logger.show_info)
+        # self.tuning.ML.log_info_signal.connect(self.logger.show_info)
 
     def read_config(self):
         with open('config.json') as f:

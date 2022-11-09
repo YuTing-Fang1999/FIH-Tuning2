@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QHBoxLayout, QWidget, QMessageBox
-from PyQt5.QtCore import pyqtSignal, QThread, QObject
+from PyQt5.QtCore import pyqtSignal, QThread, QObject, Qt
 
 from .HyperOptimizer import HyperOptimizer
 from .MplCanvasTiming import MplCanvasTiming
@@ -32,10 +32,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     # logger
     log_info_signal = pyqtSignal(str)
     run_cmd_signal = pyqtSignal(str)
+    alert_info_signal = pyqtSignal(str, str)
 
-    def __init__(self, run_page_plot, data, config, capture):
+    def __init__(self, run_page_lower_part, data, config, capture):
         super().__init__()
-        self.run_page_plot = run_page_plot
+        self.run_page_lower_part = run_page_lower_part
+        self.tab_info = self.run_page_lower_part.tab_info
         self.data = data
         self.config = config
         self.capture = capture
@@ -43,7 +45,6 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.TEST_MODE = False
         self.pretrain = False
         self.train = False
-        self.ML = ML()
 
         self.calFunc = {}
         self.calFunc["sharpness"] = get_sharpness
@@ -52,17 +53,40 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # plot
         self.bset_score_plot = MplCanvasTiming(
-            self.run_page_plot.tab_score.label_plot, color=['r', 'g'], name=['score'], axis_name=["Generation", "Score"]
+            self.run_page_lower_part.tab_score.label_plot, color=['r', 'g'], name=['score'], axis_name=["Generation", "Score"]
         )
         self.hyper_param_plot = MplCanvasTiming(
-            self.run_page_plot.tab_hyper.label_plot, color=['g', 'r'], name=['F', 'Cr'], axis_name=["Generation", "HyperParam Value"]
+            self.run_page_lower_part.tab_hyper.label_plot, color=['g', 'r'], name=['F', 'Cr'], axis_name=["Generation", "HyperParam Value"]
         )
         self.loss_plot = MplCanvasTiming(
-            self.run_page_plot.tab_loss.label_plot, color=['b','g', 'r'], name=['loss'], axis_name=["Epoch/10", "Loss"]
+            self.run_page_lower_part.tab_loss.label_plot, color=['b','g', 'r'], name=['loss'], axis_name=["Epoch/10", "Loss"]
         )
         self.update_plot = MplCanvasTiming(
-            self.run_page_plot.tab_update.label_plot, color=['b', 'k'], name=['using ML', 'no ML'], axis_name=["Generation", "Update Rate"]
+            self.run_page_lower_part.tab_update.label_plot, color=['b', 'k'], name=['using ML', 'no ML'], axis_name=["Generation", "Update Rate"]
         )
+
+        self.ML = ML(self.loss_plot)
+
+
+    def show_info_by_key(self, key, data):
+        for k in key:
+            self.tab_info.show_info("{}: {}".format(k,data[k]))
+
+    def show_info(self):
+        # show info
+        self.tab_info.label.setAlignment(Qt.AlignLeft)
+        self.tab_info.clear()
+
+        config = self.config[self.data["page_root"]][self.data["page_key"]]
+        block_data = self.data[self.data["page_root"]][self.data["page_key"]]
+
+        self.show_info_by_key(["platform"], self.data)
+        self.show_info_by_key(["page_root", "page_key"], self.data)
+        self.show_info_by_key(["trigger_idx", "trigger_name"], block_data)
+        self.tab_info.show_info("")
+        self.show_info_by_key(["TEST_MODE", "target_type", "target_score", "target_weight"], self.data)
+        self.tab_info.show_info("")
+
 
     def run(self):
         self.TEST_MODE = self.data["TEST_MODE"]
@@ -91,10 +115,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.popsize = self.data['population size']
         self.generations = self.data['generations']
         self.capture_num = self.data['capture num']
-        # self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.5, method="exponantial_reverse", rate = 0.05)
+        self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.5, method="exponantial_reverse", rate = 0.05)
         # self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.5, method="exponantial", rate=0.2)
         self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
-        self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
+        # self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
         
         # params
         self.param_names = config['param_names']
@@ -107,11 +131,15 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         if self.TEST_MODE: self.param_value = np.zeros(self.dimensions)
 
         # target score
+        if self.TEST_MODE:
+            self.data["target_type"]=["TEST"]
+            self.data["target_score"]=[0]
+            self.data["target_weight"]=[1]
+
         self.target_type = np.array(self.data["target_type"])
         self.target_IQM = np.array(self.data["target_score"])
         self.weight_IQM = np.array(self.data["target_weight"])
         self.loss_plot.setup(self.target_type)
-        # self.std_IQM=np.ones([len(self.type_IQM)])
 
         # target region
         self.roi = self.data['roi']
@@ -137,26 +165,28 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.update_rate=0
         self.ML_update_rate=0
 
-        
+        if len(self.data["target_type"])==0:
+            self.alert_info_signal.emit("請先圈ROI", "請先圈ROI")
+            return
 
         ##### start tuning #####
         # setup
+        self.show_info()
         self.setup()
-
         self.initial_individual()
 
         # ML
-        self.ML.reset(
-            TEST_MODE = self.TEST_MODE,
-            key = self.data["page_key"],
-            target_type = self.target_type,
-            std_IQM = self.std_IQM,
-            loss_plot=self.loss_plot, 
-            PRETRAIN_MODEL=self.pretrain, 
-            TRAIN=self.train, 
-            input_dim=self.dimensions, 
-            output_dim=len(self.target_type)
-        )
+        # self.ML.reset(
+        #     TEST_MODE = self.TEST_MODE,
+        #     key = self.data["page_key"],
+        #     target_type = self.target_type,
+        #     std_IQM = self.std_IQM,
+        #     loss_plot=self.loss_plot, 
+        #     PRETRAIN_MODEL=self.pretrain, 
+        #     TRAIN=self.train, 
+        #     input_dim=self.dimensions, 
+        #     output_dim=len(self.target_type)
+        # )
 
         # Do Differential Evolution
         for gen_idx in range(self.generations):
@@ -318,6 +348,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
         diff_target_IQM = self.IQMs[ind_idx] - self.target_IQM # 目標差
         pred_dif_IQM = self.ML.predict(x)
+        print(pred_dif_IQM, diff_target_IQM)
+        print(pred_dif_IQM * self.weight_IQM * diff_target_IQM)
         return (pred_dif_IQM * self.weight_IQM * diff_target_IQM < 0).all()
 
 
@@ -364,7 +396,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # print('param_value =', param_value)
         if self.TEST_MODE: 
-            if train:
+            if self.train and train:
                 self.start_ML_train()
                 self.train_task.join()
             return np.array([self.fobj(param_value)]*len(self.target_type))

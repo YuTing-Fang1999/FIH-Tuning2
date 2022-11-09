@@ -17,8 +17,9 @@ class TabPlot(QWidget):
         plot_wraprt.addWidget(self.label_plot)
 
 class TabInfo(QWidget):
-    def __init__(self, name):
+    def __init__(self, name, ui):
         super().__init__()
+        self.ui = ui
         HLayout = QHBoxLayout(self)
         self.label = QLabel(name)
         self.label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -34,6 +35,15 @@ class TabInfo(QWidget):
 
         HLayout.addWidget(self.scroll)
 
+    def show_info(self, info):
+        pre_text=self.label.text()
+        self.label.setText(pre_text+info+'\n')
+        self.ui.logger.show_info(info)
+
+    def clear(self):
+        self.label.setText("")
+
+
 
 class LowerPart(QTabWidget):
     def __init__(self, ui):
@@ -42,7 +52,7 @@ class LowerPart(QTabWidget):
         self.setup_UI()
 
     def setup_UI(self):
-        self.tab_info = TabInfo("info")
+        self.tab_info = TabInfo("info", self.ui)
         self.addTab(self.tab_info, "info")
 
         self.tab_score = TabPlot("分數圖")

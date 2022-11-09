@@ -34,6 +34,7 @@ class TriggerSelector(QComboBox):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
 
         block_data["trigger_idx"] = trigger_idx
+        block_data["trigger_name"] = self.currentText()
 
         if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']+config["file_path"]
         if xml_path=='': return

@@ -3,15 +3,15 @@ from PyQt5.QtWidgets import (
     QPushButton, QLabel
 )
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt, pyqtSignal
 from .MyTimer import MyTimer
 
 import threading
 import ctypes, inspect
-import json
 
 class UpperPart(QWidget):
+    alert_info_signal = pyqtSignal(str, str)
+
     def __init__(self, ui):
         super().__init__()
         self.ui = ui
@@ -81,6 +81,7 @@ class UpperPart(QWidget):
         self.setting = self.ui.setting
         self.data = self.ui.data
         self.config = self.ui.config
+        self.tab_info = self.ui.run_page.lower_part.tab_info
 
         if "TEST_MODE" in self.data:
             self.TEST_MODE.setChecked(self.data["TEST_MODE"])
@@ -117,19 +118,12 @@ class UpperPart(QWidget):
             self.start()
 
     def start(self):
-        self.ui.logger.signal.emit("START")
         if not self.setting.set_data(): return
+        self.ui.logger.signal.emit("START")
 
         self.tuning.is_run = True
         self.btn_run.setText('STOP')
         self.mytimer.startTimer()
-
-        # show info
-        self.ui.run_page.lower_part.tab_info.label.setAlignment(Qt.AlignLeft)
-        self.ui.run_page.lower_part.tab_info.label.setText(
-            json.dumps(self.data, indent=2) + '\n' +
-            json.dumps(self.config[self.data["page_root"]][self.data["page_key"]], indent=2)
-        )
 
         # 建立一個子執行緒
         self.tuning_task = threading.Thread(target=lambda: self.tuning.run())

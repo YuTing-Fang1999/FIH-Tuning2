@@ -43,8 +43,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.capture = capture
         self.is_run = False
         self.TEST_MODE = False
-        self.pretrain = False
-        self.train = False
+        self.PRETRAIN = False
+        self.TRAIN = False
 
         self.calFunc = {}
         self.calFunc["sharpness"] = get_sharpness
@@ -84,14 +84,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.show_info_by_key(["page_root", "page_key"], self.data)
         self.show_info_by_key(["trigger_idx", "trigger_name"], block_data)
         self.tab_info.show_info("")
-        self.show_info_by_key(["TEST_MODE", "target_type", "target_score", "target_weight"], self.data)
+        self.show_info_by_key(["TEST_MODE","PRETRAIN","TRAIN", "target_type", "target_score", "target_weight"], self.data)
         self.tab_info.show_info("")
 
 
     def run(self):
         self.TEST_MODE = self.data["TEST_MODE"]
-        self.pretrain = self.data["pretrain"]
-        self.train = self.data["train"]
+        self.PRETRAIN = self.data["PRETRAIN"]
+        self.TRAIN = self.data["TRAIN"]
         self.log_info_signal.emit('self.TEST_MODE = {}'.format(self.TEST_MODE))
 
         ##### param setting #####
@@ -176,17 +176,18 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.initial_individual()
 
         # ML
-        # self.ML.reset(
-        #     TEST_MODE = self.TEST_MODE,
-        #     key = self.data["page_key"],
-        #     target_type = self.target_type,
-        #     std_IQM = self.std_IQM,
-        #     loss_plot=self.loss_plot, 
-        #     PRETRAIN_MODEL=self.pretrain, 
-        #     TRAIN=self.train, 
-        #     input_dim=self.dimensions, 
-        #     output_dim=len(self.target_type)
-        # )
+        self.ML.reset(
+            TEST_MODE = self.TEST_MODE,
+            PRETRAIN=self.PRETRAIN, 
+            TRAIN=self.TRAIN, 
+            
+            target_type = self.target_type,
+            std_IQM = self.std_IQM,
+            key = self.data["page_key"],
+            
+            input_dim=self.dimensions, 
+            output_dim=len(self.target_type)
+        )
 
         # Do Differential Evolution
         for gen_idx in range(self.generations):
@@ -264,10 +265,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             f = np.around(self.cal_score_by_weight(now_IQM), 9)
             # self.log_info_signal.emit("now IQM {}".format(now_IQM))
             # self.log_info_signal.emit("now fitness {}".format(f))
-            if (self.pretrain or self.train) and f < self.fitness[ind_idx]: self.update_count+=1
+            if (self.PRETRAIN or self.TRAIN) and f < self.fitness[ind_idx]: self.update_count+=1
 
         # use model to predict
-        if (self.pretrain or self.train) and gen_idx>=self.ML.pred_idx:
+        if (self.PRETRAIN or self.TRAIN) and gen_idx>=self.ML.pred_idx:
             times = 0
             while self.is_bad(trial, ind_idx) and times<50:
                 trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
@@ -285,7 +286,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # self.log_info_signal.emit("now fitness {}".format(f))
 
         # update dataset
-        if (self.pretrain or self.train):
+        if (self.PRETRAIN or self.TRAIN):
             x = np.zeros(self.dimensions)
             x[self.param_change_idx] = trial - self.pop[ind_idx]
             y = now_IQM - self.IQMs[ind_idx]
@@ -296,7 +297,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, f, now_IQM)
             
-            if (self.pretrain or self.train): self.ML_update_count+=1
+            if (self.PRETRAIN or self.TRAIN): self.ML_update_count+=1
             else: self.update_count+=1
 
             # 替換原本的個體
@@ -346,10 +347,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     def is_bad(self, trial, ind_idx):
         x = np.zeros(self.dimensions)
         x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
-        diff_target_IQM = self.IQMs[ind_idx] - self.target_IQM # 目標差
+        diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
         pred_dif_IQM = self.ML.predict(x)
-        print(pred_dif_IQM, diff_target_IQM)
-        print(pred_dif_IQM * self.weight_IQM * diff_target_IQM)
         return (pred_dif_IQM * self.weight_IQM * diff_target_IQM < 0).all()
 
 
@@ -396,7 +395,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # print('param_value =', param_value)
         if self.TEST_MODE: 
-            if self.train and train:
+            if self.TRAIN and train:
                 self.start_ML_train()
                 self.train_task.join()
             return np.array([self.fobj(param_value)]*len(self.target_type))
@@ -406,7 +405,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # compile project using bat. push bin code to camera
         self.buildAndPushToCamera()
-        if self.train and train: self.start_ML_train()
+        if self.TRAIN and train: self.start_ML_train()
         sleep(6)
 
         # 拍照
@@ -416,7 +415,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         now_IQM = self.measure_score_by_multiple_capture(path)
 
         # 等ML train完再繼續
-        if self.train and train: self.train_task.join()
+        if self.TRAIN and train: self.train_task.join()
         
         return now_IQM
 

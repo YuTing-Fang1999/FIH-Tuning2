@@ -39,11 +39,11 @@ class UpperPart(QWidget):
 
         self.pretrain = QCheckBox()
         GLayout_ML.addWidget(self.pretrain, 1, 0, 1, 1, Qt.AlignRight)
-        GLayout_ML.addWidget(QLabel("pretrain model"), 1, 1, 1, 1)
+        GLayout_ML.addWidget(QLabel("PRETRAIN"), 1, 1, 1, 1)
 
         self.train = QCheckBox()
         GLayout_ML.addWidget(self.train, 2, 0, 1, 1, Qt.AlignRight)
-        GLayout_ML.addWidget(QLabel("training"), 2, 1, 1, 1)
+        GLayout_ML.addWidget(QLabel("TRAIN"), 2, 1, 1, 1)
 
         HLayout.addLayout(GLayout_ML)
 
@@ -85,8 +85,8 @@ class UpperPart(QWidget):
 
         if "TEST_MODE" in self.data:
             self.TEST_MODE.setChecked(self.data["TEST_MODE"])
-            self.pretrain.setChecked(self.data["pretrain"])
-            self.train.setChecked(self.data["train"])
+            self.pretrain.setChecked(self.data["PRETRAIN"])
+            self.train.setChecked(self.data["TRAIN"])
 
     def set_data(self):
         # self.tuning.TEST_MODE = self.TEST_MODE.isChecked()
@@ -94,8 +94,8 @@ class UpperPart(QWidget):
         # self.tuning.train = self.train.isChecked()
 
         self.data["TEST_MODE"] = self.TEST_MODE.isChecked()
-        self.data["pretrain"] = self.pretrain.isChecked()
-        self.data["train"] = self.train.isChecked()
+        self.data["PRETRAIN"] = self.pretrain.isChecked()
+        self.data["TRAIN"] = self.train.isChecked()
 
     def setup_controller(self):
         self.btn_run.clicked.connect(self.run)

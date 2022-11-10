@@ -151,11 +151,12 @@ class ML(QWidget):
                 data["x_train"] = list(self.x_train)
                 data["y_train"] = list(self.y_train)
                 json.dump(data, outfile)
-
-            for type in self.target_type:
-                path = "myPackage/ML/Model/{}/{}".format(self.key, type)
-                torch.save(self.models[type].state_dict(), path)
-                self.log_info_signal.emit("save model: {}".format(path))
+                
+            if self.TRAIN:
+                for type in self.target_type:
+                    path = "myPackage/ML/Model/{}/{}".format(self.key, type)
+                    torch.save(self.models[type].state_dict(), path)
+                    self.log_info_signal.emit("save model: {}".format(path))
     
 
 

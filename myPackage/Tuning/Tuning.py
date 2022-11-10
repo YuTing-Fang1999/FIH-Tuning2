@@ -93,6 +93,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.tab_info.show_info("\n###### Differential evolution ######")
         self.show_info_by_key(["population size","generations","capture num"], self.data)
         self.show_info_by_key(["bounds","dimensions","param_change_idx"], block_data)
+        self.tab_info.show_info("{}: {}".format("param_value", self.param_value))
 
         self.tab_info.show_info("\n###### Mode ######")
         self.show_info_by_key(["TEST_MODE","PRETRAIN","TRAIN"], self.data)
@@ -101,7 +102,6 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.TEST_MODE = self.data["TEST_MODE"]
         self.PRETRAIN = self.data["PRETRAIN"]
         self.TRAIN = self.data["TRAIN"]
-        self.log_info_signal.emit('self.TEST_MODE = {}'.format(self.TEST_MODE))
 
         ##### param setting #####
         config = self.config[self.data["page_root"]][self.data["page_key"]]
@@ -137,6 +137,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.param_change_idx = block_data['param_change_idx'] # 需要tune的參數位置
         self.param_change_num = len(self.param_change_idx) # 需要tune的參數個數
         self.trigger_idx = block_data["trigger_idx"]
+        # test mode 下沒改動的地方為0
         if self.TEST_MODE: self.param_value = np.zeros(self.dimensions)
 
         # target score
@@ -276,11 +277,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # use model to predict
         if (self.PRETRAIN or self.TRAIN) and gen_idx>=self.ML.pred_idx:
-            times = 0
-            while self.is_bad(trial, ind_idx) and times<50:
-                trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
-                times+=1
-            self.log_info_signal.emit("times: {}".format(times))                
+            trial, trial_denorm = self.get_best_trial(ind_idx, F, Cr, trial, trial_denorm)
+            # times = 0
+            # while self.is_bad(trial, ind_idx, times) and times<50:
+            #     trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+            #     times+=1
+            # self.log_info_signal.emit("times: {}".format(times))                
             
         # update param_value
         self.param_value[self.param_change_idx] = trial_denorm
@@ -351,14 +353,39 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # 執行該子執行緒
         self.train_task.start()
 
-    def is_bad(self, trial, ind_idx):
+    def get_best_trial(self, ind_idx, F, Cr, trial, trial_denorm):
+        best_trial, best_trial_denorm = trial, trial_denorm
+        best_good_num = 0
+        times = 0
+        for i in range(20):
+            x = np.zeros(self.dimensions)
+            x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
+            diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
+            pred_dif_IQM = self.ML.predict(x)
+
+            good_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM > 0)
+            if good_num > best_good_num:
+                best_trial, best_trial_denorm = trial, trial_denorm
+                times = i
+                if good_num==self.target_num:
+                    break
+
+            trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+
+        self.log_info_signal.emit("times: {}".format(times))  
+        return best_trial, best_trial_denorm
+
+    def is_bad(self, trial, ind_idx, times):
         x = np.zeros(self.dimensions)
         x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
         diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
         pred_dif_IQM = self.ML.predict(x)
-        ##### 更改判斷標準(good小於半數) #####
-        good_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM > 0)
-        return  good_num < np.ceil(self.target_num/2)
+        ##### 更改判斷標準(bad大於半數) #####
+        bad_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0)
+        if times<10:
+            return bad_num >= 1
+        else: 
+            return bad_num >= np.ceil(self.target_num/2)
 
 
     def generate_parameters(self, ind_idx, F, Cr):

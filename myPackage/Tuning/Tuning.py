@@ -465,19 +465,35 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         for i, ele in enumerate(mod_aec_datas):
             if i==self.trigger_idx:
-                wnr24_rgn_data = ele.find("wnr24_rgn_data")
+                rgn_data = ele.find("wnr24_rgn_data")
                 dim = 0
                 for param_name in self.param_names:
-                    parent = wnr24_rgn_data.find(param_name+'_tab')
-                    length = int(parent.attrib['length'])
+                    parent = rgn_data.find(param_name+'_tab')
+                    if parent:
 
-                    param_value_new = param_value[dim: dim+length]
-                    param_value_new = [str(x) for x in param_value_new]
-                    param_value_new = ' '.join(param_value_new)
+                        length = int(parent.attrib['length'])
 
-                    # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
-                    wnr24_rgn_data.find(param_name+'_tab/' + param_name).text = param_value_new
-                    # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                        param_value_new = param_value[dim: dim+length]
+                        param_value_new = [str(x) for x in param_value_new]
+                        param_value_new = ' '.join(param_value_new)
+
+                        # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                        rgn_data.find(param_name+'_tab/' + param_name).text = param_value_new
+                        # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+
+                    else:
+                        parent = rgn_data.find(param_name)
+
+                        length = int(parent.attrib['length'])
+
+                        param_value_new = param_value[dim: dim+length]
+                        param_value_new = [str(x) for x in param_value_new]
+                        param_value_new = ' '.join(param_value_new)
+
+                        # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                        parent.text = param_value_new
+                        # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+
 
                     dim += length
                 break

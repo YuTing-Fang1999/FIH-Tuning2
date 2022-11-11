@@ -44,23 +44,40 @@ class TriggerSelector(QComboBox):
         block_data['defult_range'] = []
         block_data['param_value'] = []
 
+        print(xml_path)
+        print(config["xml_node"])
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
         # 子節點與屬性
         node  =  root.findall(config["xml_node"])
-
+        
         for i, ele in enumerate(node):
+            print(ele.text)
             if i==trigger_idx:
-                wnr24_rgn_data = ele.find(config["data_node"])
+                rgn_data = ele.find(config["data_node"])
                 for param_name in config['param_names']:
-                    parent = wnr24_rgn_data.find(param_name+'_tab')
+                    parent = rgn_data.find(param_name+'_tab')
+                    if parent:
+                        param_value = parent.find(param_name).text.split(' ') 
+                        param_value = [float(x) for x in param_value]
 
-                    param_value = parent.find(param_name).text.split(' ')
-                    param_value = [float(x) for x in param_value]
+                        bound = json.loads(parent.attrib['range'])
+                        length = int(parent.attrib['length'])
+                        
+                    else:
+                        parent = rgn_data.find(param_name)
+                        param_value = parent.text.split(' ') 
+                        param_value = [float(x) for x in param_value]
 
-                    bound = json.loads(parent.attrib['range'])
-                    length = int(parent.attrib['length'])
+                        bound = json.loads(parent.attrib['range'])
+                        length = int(parent.attrib['length'])
+
+                    # ASF 暫定64取1
+                    if param_name in ["layer_1_gain_positive_lut",
+                                        "layer_1_gain_negative_lut",
+                                        "layer_1_gain_weight_lut"]:
+                        param_value = [param_value[0]]
 
                     block_data['dimensions'] += length
                     block_data['lengths'].append(length)
@@ -70,6 +87,7 @@ class TriggerSelector(QComboBox):
 
         # converting 2d list into 1d
         block_data['param_value'] = sum(block_data['param_value'], [])
+        print(block_data['param_value'])
 
         self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
         self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])

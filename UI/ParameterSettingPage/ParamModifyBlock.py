@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import (
     QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
-    QPushButton, QLabel, QLineEdit, QCheckBox
+    QPushButton, QLabel, QLineEdit, QCheckBox, QSizePolicy
 )
 
 from PyQt5 import QtCore
-class ParamModifyItem(QWidget):
+
+class GridModifyItem(QWidget):
 
     def __init__(self, title, name, col):
         super().__init__()
@@ -40,6 +41,7 @@ class ParamModifyItem(QWidget):
         for i in range(len(col)):
             label_name = QLabel()
             label_name.setText(name[i])
+            
             label_name.setAlignment(QtCore.Qt.AlignRight)
             gridLayout.addWidget(label_name, i, 0)
 
@@ -47,8 +49,6 @@ class ParamModifyItem(QWidget):
                 gridLayout.addWidget(self.checkBoxes[idx], i, 2+j*2)
                 gridLayout.addWidget(self.lineEdits[idx], i, 1+j*2)
                 idx += 1
-
-        gridLayout.setColumnStretch(0, 1)
 
         VLayout.addLayout(title_wraper)
         VLayout.addLayout(gridLayout)
@@ -89,7 +89,7 @@ class ParamModifyBlock(QWidget):
 
         self.param_modify_items = []
         for i in range(len(config["title"])):
-            item = ParamModifyItem(config["title"][i], config["name"][i], config["col"][i])
+            item = GridModifyItem(config["title"][i], config["name"][i], config["col"][i])
             self.param_modify_items.append(item)
             self.VLayout.addWidget(item)
 

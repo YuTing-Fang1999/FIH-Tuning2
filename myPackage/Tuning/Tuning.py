@@ -104,6 +104,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.TRAIN = self.data["TRAIN"]
 
         ##### param setting #####
+        self.key = self.data["page_key"]
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
@@ -428,7 +429,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         
 
     def measure_score_by_param_value(self, path, param_value, train):
-
+        
         # print('param_value =', param_value)
         if self.TEST_MODE: 
             if self.TRAIN and train:
@@ -462,6 +463,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # 子節點與屬性
         mod_aec_datas = root.findall(self.xml_node)
+
+        if self.key == "ASF":
+            param_value = np.concatenate([[p]*64 for p in param_value])
 
         for i, ele in enumerate(mod_aec_datas):
             if i==self.trigger_idx:

@@ -78,6 +78,7 @@ class TriggerSelector(QComboBox):
                                         "layer_1_gain_negative_lut",
                                         "layer_1_gain_weight_lut"]:
                         param_value = [param_value[0]]
+                        length = 1
 
                     block_data['dimensions'] += length
                     block_data['lengths'].append(length)

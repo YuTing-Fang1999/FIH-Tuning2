@@ -116,12 +116,18 @@ class ParamRangeBlock(QWidget):
                     block_data["coustom_range"] = []
                     break
                 block_data["coustom_range"].append(json.loads(lineEdit.text()))
-
-        # print(block_data["coustom_range"])
+        
         if len(block_data["coustom_range"]) > 0:
-            block_data['bounds'] = [block_data['coustom_range'][0]]*block_data['lengths'][0]
+            if self.key == "ASF":
+                block_data['bounds'] = [block_data['coustom_range'][0]]
+            else: 
+                block_data['bounds'] = [block_data['coustom_range'][0]]*block_data['lengths'][0]
+                
             for i in range(1, len(block_data['lengths'])):
-                block_data['bounds'] = np.concatenate([block_data['bounds'] , [block_data['coustom_range'][i]]*block_data['lengths'][i]])
+                if self.key == "ASF":
+                    block_data['bounds'] = np.concatenate([block_data['bounds'] , [block_data['coustom_range'][i]]])
+                else:
+                    block_data['bounds'] = np.concatenate([block_data['bounds'] , [block_data['coustom_range'][i]]*block_data['lengths'][i]])
 
             block_data['bounds']=block_data['bounds'].tolist()
 

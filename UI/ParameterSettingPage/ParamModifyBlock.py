@@ -41,6 +41,7 @@ class GridModifyItem(QWidget):
         for i in range(len(col)):
             label_name = QLabel()
             label_name.setText(name[i])
+            label_name.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
             
             label_name.setAlignment(QtCore.Qt.AlignRight)
             gridLayout.addWidget(label_name, i, 0)

@@ -26,15 +26,15 @@ class TriggerSelector(QComboBox):
 
     def set_trigger_idx(self, trigger_idx, xml_path=''):
         if trigger_idx==-1:
-            print("set_trigger_idx return because trigger_idx=-1")
+            self.logger.signal.emit("set_trigger_idx return because trigger_idx=-1")
             return
-        print('trigger_idx', trigger_idx)
+        self.logger.signal.emit('trigger_idx: {}'.format(trigger_idx))
 
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
 
-        block_data["trigger_idx"] = trigger_idx
-        block_data["trigger_name"] = self.currentText()
+        self.data["trigger_idx"] = trigger_idx
+        self.data["trigger_name"] = self.currentText()
 
         if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']+config["file_path"]
         if xml_path=='': return
@@ -44,8 +44,6 @@ class TriggerSelector(QComboBox):
         block_data['defult_range'] = []
         block_data['param_value'] = []
 
-        print(xml_path)
-        print(config["xml_node"])
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
@@ -53,7 +51,6 @@ class TriggerSelector(QComboBox):
         node  =  root.findall(config["xml_node"])
         
         for i, ele in enumerate(node):
-            print(ele.text)
             if i==trigger_idx:
                 rgn_data = ele.find(config["data_node"])
                 for param_name in config['param_names']:
@@ -88,7 +85,7 @@ class TriggerSelector(QComboBox):
 
         # converting 2d list into 1d
         block_data['param_value'] = sum(block_data['param_value'], [])
-        print(block_data['param_value'])
+        # print(block_data['param_value'])
 
         self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
         self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])

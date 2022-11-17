@@ -97,6 +97,7 @@ class ParamRangeBlock(QWidget):
         
         if "coustom_range" not in self.data[self.root][self.key]:
             self.data[self.root][self.key]["coustom_range"] = defult_range
+
         coustom_range = self.data[self.root][self.key]["coustom_range"]
         idx = 0
         for item in self.param_range_items:

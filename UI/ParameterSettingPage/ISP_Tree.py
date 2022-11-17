@@ -25,6 +25,8 @@ class ISP_Tree(QWidget):
     def setup_UI(self):
         
         self.tree=QTreeWidget()
+        self.tree.setColumnWidth(0, 1)
+        self.tree.setColumnWidth(1, 1)
         self.tree.setHeaderHidden( True )
         self.tree.hide()
         self.HLayout.addWidget(self.tree)
@@ -80,7 +82,7 @@ class ISP_Tree(QWidget):
         self.page.param_range_block.update_UI(root, key)
         self.data["page_root"] = root
         self.data["page_key"] = key
-        self.page.trigger_selector.set_trigger_idx(0)
+        self.page.trigger_selector.set_trigger_idx(self.data["trigger_idx"])
 
 
 if __name__ == '__main__':

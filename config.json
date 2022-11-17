@@ -66,8 +66,7 @@
             "data_node": "asf32_rgn_data",
             "param_names": [
                 "layer_1_gain_positive_lut",
-                "layer_1_gain_negative_lut",
-                "layer_1_gain_weight_lut"
+                "layer_1_gain_negative_lut"
             ],
             "title": [
                 "layer_1_gain"
@@ -75,13 +74,11 @@
             "name": [
                 [
                     "positive_lut",
-                    "negative_lut",
-                    "weight_lut"
+                    "negative_lut"
                 ]
             ],
             "col": [
                 [
-                    1,
                     1,
                     1
                 ]
@@ -93,6 +90,7 @@
             "data_node": "bpcabf41_rgn_data",
             "param_names": [
                 "noise_prsv_lo",
+                "noise_prsv_hi",
                 "edge_softness"
             ],
             "title": [
@@ -107,6 +105,7 @@
             ],
             "col": [
                 [
+                    2,
                     2,
                     1
                 ]

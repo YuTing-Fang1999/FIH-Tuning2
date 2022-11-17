@@ -114,12 +114,12 @@ class ParameterSettingPage(QWidget):
 
         root = item.parent().text(0)
         key = item.text(0)
-        print('change param page to', root, key)
+        # print('change param page to', root, key)
         self.param_modify_block.update_UI(root, key)
         self.param_range_block.update_UI(root, key)
         self.data["page_root"] = root
         self.data["page_key"] = key
-        self.trigger_selector.set_trigger_idx(0)
+        self.trigger_selector.set_trigger_idx(self.data["trigger_idx"])
 
     def set_project(self, folder_path):
         self.logger.show_info('\nset_project')
@@ -139,6 +139,7 @@ class ParameterSettingPage(QWidget):
             return
         
         config = self.config[self.data["page_root"]][self.data["page_key"]]
+
         xml_path+=config["file_path"]
 
         # 從檔案載入並解析 XML 資料

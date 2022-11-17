@@ -73,7 +73,6 @@ class Logger(QWidget):
         try:
             p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except:
-            self.signal.emit("指令錯誤")
             self.signal.emit('************** FAILED **************')
             return -1, ""
         result = []
@@ -88,7 +87,8 @@ class Logger(QWidget):
             sys.stderr.flush()
         # 判斷返回碼狀態
         if p.returncode == 0:
-            self.signal.emit('************** SUCCESS **************')
+            # self.signal.emit('************** SUCCESS **************')
+            pass
         else:
             self.signal.emit('************** FAILED **************')
 

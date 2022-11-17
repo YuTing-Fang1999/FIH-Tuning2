@@ -25,9 +25,10 @@ class Capture(QWidget):
         self.open_camera()
         # sleep(focus_time) #wait for auto focus
         self.log_info_signal.emit('wait for auto focus')
-        for i in range(focus_time):
-            self.log_info_signal.emit(str(i))
-            sleep(1)
+        sleep(focus_time)
+        # for i in range(focus_time):
+        #     self.log_info_signal.emit(str(i))
+        #     sleep(1)
 
         # capture
         for i in range(capture_num):
@@ -65,7 +66,7 @@ class Capture(QWidget):
         file_names = [f.split(' ')[-1].replace('\r', '') for f in file_names]
         self.log_info_signal.emit('file_names')
         self.log_info_signal.emit("{}".format(file_names))
-        if file_names[0] == '':
+        if len(file_names)==0 or file_names[0] == '':
             self.capture_fail()
             self.log_info_signal.emit('正在重新拍攝...')
             self.capture(path=path, capture_num=capture_num)

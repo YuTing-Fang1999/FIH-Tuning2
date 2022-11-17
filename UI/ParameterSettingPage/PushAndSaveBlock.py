@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QThread, pyqtSignal
 import xml.etree.ElementTree as ET
 from time import sleep
+import os
+import shutil
 
 class CaptureWorker(QThread):
     set_btn_enable_signal = pyqtSignal(bool)
@@ -69,6 +71,9 @@ class PushAndSaveBlock(QWidget):
 
         VLayout.addLayout(gridLayout)
 
+        self.btn_set_to_xml = QPushButton("寫入XML")
+        VLayout.addWidget(self.btn_set_to_xml)
+
         self.btn_push_phone = QPushButton("推到手機 + 拍照")
         VLayout.addWidget(self.btn_push_phone)
 
@@ -83,6 +88,7 @@ class PushAndSaveBlock(QWidget):
         self.config = self.ui.config
         self.tuning = self.ui.tuning
         self.capture = self.ui.capture
+        self.logger = self.ui.logger
         if 'saved_dir_name' in self.data:
             self.lineEdits_dir_name.setText(self.data['saved_dir_name'])
         if 'saved_img_name' in self.data:
@@ -97,6 +103,7 @@ class PushAndSaveBlock(QWidget):
         self.capture_worker.set_btn_enable_signal.connect(self.btn_enable)
 
     def setup_controller(self):
+        self.btn_set_to_xml.clicked.connect(self.set_to_xml)
         self.btn_push_phone.clicked.connect(self.push_phone)
         self.btn_capture.clicked.connect(self.do_capture)
         self.btn_recover_param.clicked.connect(self.recover_param)
@@ -105,9 +112,8 @@ class PushAndSaveBlock(QWidget):
         self.data['saved_dir_name'] = self.lineEdits_dir_name.text()
         self.data['saved_img_name'] = self.lineEdits_img_name.text()
 
-    def push_phone(self):
+    def set_to_xml(self):
         param_value = self.get_param_value()
-        print(param_value)
 
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
@@ -115,13 +121,16 @@ class PushAndSaveBlock(QWidget):
         # param
         self.tuning.xml_path = self.data['xml_path']+config["file_path"]
         self.tuning.xml_node = config["xml_node"]
-        self.tuning.trigger_idx = block_data["trigger_idx"]
+        self.tuning.trigger_idx = self.data["trigger_idx"]
         self.tuning.param_names = config['param_names']
         self.tuning.key = self.data["page_key"]
         self.tuning.data_node = config["data_node"]
 
-        print('set param to xml {}, trigger_idx={}'.format(self.tuning.xml_path, self.tuning.trigger_idx))
+        self.logger.signal.emit('set {} trigger_idx={} param to xml {}, '.format(self.data["page_key"], self.tuning.trigger_idx, config["file_path"]))
         self.tuning.setParamToXML(param_value)
+
+    def push_phone(self):
+        self.set_to_xml()
         self.push_worker.start()
 
     def get_param_value(self):
@@ -139,49 +148,8 @@ class PushAndSaveBlock(QWidget):
                 idx += 1
         return param_value
 
-
-    # def setParamToXML(self, param_value):
-    #     config = self.config[self.data["page_root"]][self.data["page_key"]]
-    #     block_data = self.data[self.data["page_root"]][self.data["page_key"]]
-        
-    #     # param
-    #     self.xml_path = self.data['xml_path']+config["file_path"]
-    #     self.xml_node = config["xml_node"]
-    #     self.trigger_idx = block_data["trigger_idx"]
-    #     self.param_names = config['param_names']
-
-    #     print('set param to xml {}, trigger_idx={}'.format(self.xml_path, self.trigger_idx))
-
-    #     # 從檔案載入並解析 XML 資料
-    #     tree = ET.parse(self.xml_path)
-    #     root = tree.getroot()
-
-    #     # 子節點與屬性
-    #     mod_aec_datas = root.findall(self.xml_node)
-
-    #     for i, ele in enumerate(mod_aec_datas):
-    #         if i==self.trigger_idx:
-    #             wnr24_rgn_data = ele.find("wnr24_rgn_data")
-    #             dim = 0
-    #             for param_name in self.param_names:
-    #                 parent = wnr24_rgn_data.find(param_name+'_tab')
-    #                 length = int(parent.attrib['length'])
-
-    #                 param_value_new = param_value[dim: dim+length]
-    #                 param_value_new = [str(x) for x in param_value_new]
-    #                 param_value_new = ' '.join(param_value_new)
-
-    #                 # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
-    #                 wnr24_rgn_data.find(param_name+'_tab/' + param_name).text = param_value_new
-    #                 # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
-
-    #                 dim += length
-    #             break
-
-    #     # write the xml file
-    #     tree.write(self.xml_path, encoding='UTF-8', xml_declaration=True)
-
     def btn_enable(self, b):
+        self.btn_set_to_xml.setEnabled(b)
         self.btn_capture.setEnabled(b)
         self.btn_push_phone.setEnabled(b)
 
@@ -205,7 +173,16 @@ class PushAndSaveBlock(QWidget):
     def recover_param(self):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         config_data = self.config[self.data["page_root"]][self.data["page_key"]]
-        self.ui.parameter_setting_page.trigger_selector.set_trigger_idx(block_data["trigger_idx"], 
-            xml_path='C:/Users/s830s/OneDrive/文件/github/FIH/Tuning/oem/qcom/tuning/s5k3l6_c7project_origin/Scenario.Default/XML/'+config_data["file_path"]
-        )
+
+        src = self.data["project_path"]+"_origin"+"/Scenario.Default/XML/"+config_data["file_path"]
+        des = self.data["project_path"]+"/Scenario.Default/XML/"+config_data["file_path"]
+
+        if not os.path.exists(src):
+            self.logger.signal.emit("{} not found".format(src))
+            return
+
+        self.logger.signal.emit("overwrite {} from {}".format(config_data["file_path"], src))
+        shutil.copyfile(src, des)
+
+        self.ui.parameter_setting_page.trigger_selector.set_trigger_idx(self.data["trigger_idx"])
 

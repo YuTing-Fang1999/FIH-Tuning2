@@ -88,7 +88,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         self.tab_info.show_info("\n###### Tuning Block ######")
         self.show_info_by_key(["page_root", "page_key"], self.data)
-        self.show_info_by_key(["trigger_idx", "trigger_name"], block_data)
+        self.show_info_by_key(["trigger_idx", "trigger_name"], self.data)
 
         self.tab_info.show_info("\n###### Differential evolution ######")
         self.show_info_by_key(["population size","generations","capture num"], self.data)
@@ -138,7 +138,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.param_value = np.array(block_data['param_value']) # 所有參數值
         self.param_change_idx = block_data['param_change_idx'] # 需要tune的參數位置
         self.param_change_num = len(self.param_change_idx) # 需要tune的參數個數
-        self.trigger_idx = block_data["trigger_idx"]
+        self.trigger_idx = self.data["trigger_idx"]
         # test mode 下沒改動的地方為0
         if self.TEST_MODE: self.param_value = np.zeros(self.dimensions)
 
@@ -152,6 +152,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.target_IQM = np.array(self.data["target_score"])
         self.weight_IQM = np.array(self.data["target_weight"])
         self.target_num = len(self.target_type)
+        self.std_IQM = np.ones(self.target_num)
         self.loss_plot.setup(self.target_type)
 
         # target region
@@ -180,6 +181,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         if len(self.data["target_type"])==0:
             self.alert_info_signal.emit("請先圈ROI", "請先圈ROI")
+            self.finish_signal.emit()
             return
 
         ##### start tuning #####
@@ -444,7 +446,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # compile project using bat. push bin code to camera
         self.buildAndPushToCamera(self.exe_path, self.project_path, self.bin_name)
         if self.TRAIN and train: self.start_ML_train()
-        sleep(6)
+        sleep(12)
 
         # 拍照
         self.capture.capture(path, capture_num=self.capture_num)
@@ -511,6 +513,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.run_cmd_signal.emit('adb shell input keyevent = KEYCODE_HOME')
         self.run_cmd_signal.emit("build_and_push.bat {} {} {}".format(exe_path, project_path, bin_name))
         self.capture.clear_camera_folder()
+        self.log_info_signal.emit('wait for reboot camera...')
 
     def measure_score_by_multiple_capture(self, path):
         IQM_scores = []

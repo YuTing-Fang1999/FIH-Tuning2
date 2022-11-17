@@ -68,7 +68,7 @@ class Logger(QWidget):
         :param shell: 是否開啟shell
         :return: 子進程狀態碼和執行結果
         """
-        self.signal.emit('************** START **************')
+        # self.signal.emit('************** START **************')
         self.signal.emit(cmd)
         try:
             p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

@@ -101,6 +101,7 @@
             "name": [
                 [
                     "noise_prsv_lo",
+                    "noise_prsv_hi",
                     "edge_softness"
                 ]
             ],

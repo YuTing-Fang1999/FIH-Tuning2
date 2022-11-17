@@ -90,6 +90,7 @@ class ProjectSettingPage(QWidget):
         self.defult_path = folder_path
         self.label_project_path.setText(folder_path)
         self.data["project_path"] = folder_path
+        self.data.pop("OPE")
 
         self.ui.parameter_setting_page.set_project(folder_path)
 

@@ -111,6 +111,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # xml path
         self.xml_path = self.data['xml_path']+config["file_path"]
         self.xml_node = config["xml_node"]
+        self.data_node = config["data_node"]
         if not os.path.exists(self.xml_path):
             self.log_info_signal.emit("The {} doesn't exists".format(self.xml_path))
             # print("The", self.xml_path, "doesn't exists")
@@ -469,7 +470,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         for i, ele in enumerate(mod_aec_datas):
             if i==self.trigger_idx:
-                rgn_data = ele.find("wnr24_rgn_data")
+                rgn_data = ele.find(self.data_node)
                 dim = 0
                 for param_name in self.param_names:
                     parent = rgn_data.find(param_name+'_tab')

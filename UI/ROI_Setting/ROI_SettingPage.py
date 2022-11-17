@@ -48,7 +48,7 @@ class CaptureWorker(QThread):
         self.set_btn_enable_signal.emit(False)
         # capture 
         img_name = 'capture'
-        self.capture.capture(img_name, focus_time = 2, save_time = 0.5, capture_num = 1)
+        self.capture.capture(img_name, focus_time = 4, save_time = 0.5, capture_num = 1)
         self.set_photo_signal.emit()
         self.set_btn_enable_signal.emit(True)
         

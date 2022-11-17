@@ -17,17 +17,22 @@ class Capture(QWidget):
         super().__init__()
         self.logger = logger
         self.CAMERA_DEBUG = False
-        self.CAMERA_PATH = '/sdcard/DCIM/Camera/*'
+        self.CAMERA_PATH = '/sdcard/DCIM/Camera'
         self.state = threading.Condition()
 
     def capture(self, path = "", focus_time = 4, save_time = 1, capture_num = 1):
 
         self.open_camera()
-        sleep(focus_time) #wait fot auto focus
+        # sleep(focus_time) #wait for auto focus
+        self.log_info_signal.emit('wait for auto focus')
+        for i in range(focus_time):
+            self.log_info_signal.emit(str(i))
+            sleep(1)
+
         # capture
         for i in range(capture_num):
             self.press_camera_button()
-            sleep(0.01) 
+            sleep(0.05) 
         sleep(save_time) #wait for save photo
         self.transfer_img(path, capture_num)
 
@@ -40,7 +45,7 @@ class Capture(QWidget):
         #delete from phone: adb shell rm self.CAMERA_PATH/*
         self.log_info_signal.emit('\nclear_camera_folder')
         ######## 注意不要誤刪到系統!!!!! ########
-        rc, r = self.logger.run_cmd("adb shell rm -rf {}".format(self.CAMERA_PATH))
+        rc, r = self.logger.run_cmd("adb shell rm -rf {}/*".format(self.CAMERA_PATH))
         # if rc!=0: return
 
     def press_camera_button(self):
@@ -57,7 +62,7 @@ class Capture(QWidget):
 
         # find the last num
         file_names = r.split('\n')[1:capture_num+1] 
-        file_names = [f.split(' ')[-1][:-1] for f in file_names]
+        file_names = [f.split(' ')[-1].replace('\r', '') for f in file_names]
         self.log_info_signal.emit('file_names')
         self.log_info_signal.emit("{}".format(file_names))
         if file_names[0] == '':
@@ -67,8 +72,8 @@ class Capture(QWidget):
 
         else:
             for i in range(capture_num):
-                file_name = self.CAMERA_PATH + file_names[i]
-                if path == "":
+                file_name = "{}/{}".format(self.CAMERA_PATH, file_names[i])
+                if path == "test/":
                     p = 'test/'+file_name.split('/')[-1]
                 elif capture_num==1:
                     p = str(path+".jpg")

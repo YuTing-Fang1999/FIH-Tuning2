@@ -15,8 +15,8 @@ import os
 import sys
 import cv2
 import math
-import torch
 import threading
+import shutil
 
 class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     finish_signal = pyqtSignal()
@@ -339,7 +339,11 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
                         if os.path.exists(des): os.remove(des)
                         os.replace(src,des)
-                
+
+                    # 儲存xml
+                    des="{}/{}_{}.xml".format(gen_dir, self.key, ind_idx)
+                    shutil.copyfile(self.xml_path, des)
+                    
                 if f==0:
                     self.finish_signal.emit()
                     sys.exit()

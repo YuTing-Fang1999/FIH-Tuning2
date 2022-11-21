@@ -239,6 +239,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if self.fitness[ind_idx] < self.best_score:
                 self.update_best_score(ind_idx, self.fitness[ind_idx])
 
+            # 儲存xml
+            des="best/{}_{}.xml".format(self.key, ind_idx)
+            shutil.copyfile(self.xml_path, des)
+
+        if os.path.exists("best_initial"): shutil.rmtree("best_initial")
+        shutil.copytree("best", "best_initial")
         self.IQMs = np.array(self.IQMs)
         self.std_IQM = self.IQMs.std(axis=0)
         print('std_IQM',self.std_IQM)
@@ -259,6 +265,13 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         for ind_idx in range(self.popsize):
             self.run_DE_for_a_individual(F, Cr, gen_idx, ind_idx, gen_dir)
+
+        # 儲存xml
+        if os.path.exists("best_{}".format(gen_idx)): shutil.rmtree("best_{}".format(gen_idx))
+        shutil.copytree("best", "best_{}".format(gen_idx)) 
+        # remove gen_dir
+        shutil.rmtree(gen_dir)
+        
         self.update_rate=self.update_count/self.popsize
         self.ML_update_rate=self.ML_update_count/self.popsize
         
@@ -341,7 +354,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                         os.replace(src,des)
 
                     # 儲存xml
-                    des="{}/{}_{}.xml".format(gen_dir, self.key, ind_idx)
+                    des="best/{}_{}.xml".format(self.key, ind_idx)
                     shutil.copyfile(self.xml_path, des)
                     
                 if f==0:

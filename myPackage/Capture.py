@@ -38,25 +38,25 @@ class Capture(QWidget):
         self.transfer_img(path, capture_num)
 
     def open_camera(self):
-        self.log_info_signal.emit('\nopen_camera')
+        if self.CAMERA_DEBUG: self.log_info_signal.emit('\nopen_camera')
         rc, r = self.logger.run_cmd("adb shell am start -a android.media.action.STILL_IMAGE_CAMERA --ez com.google.assistant.extra.CAMERA_OPEN_ONLY true --ez android.intent.extra.CAMERA_OPEN_ONLY true --ez isVoiceQuery true --ez NoUiQuery true --es android.intent.extra.REFERRER_NAME android-app://com.google.android.googlequicksearchbox/https/www.google.com")
         # if rc!=0: return False
 
     def clear_camera_folder(self):
         #delete from phone: adb shell rm self.CAMERA_PATH/*
-        self.log_info_signal.emit('\nclear_camera_folder')
+        if self.CAMERA_DEBUG: self.log_info_signal.emit('\nclear_camera_folder')
         ######## 注意不要誤刪到系統!!!!! ########
         rc, r = self.logger.run_cmd("adb shell rm -rf {}/*".format(self.CAMERA_PATH))
         # if rc!=0: return
 
     def press_camera_button(self):
         #condition 1 screen on 2 camera open: adb shell input keyevent = CAMERA
-        self.log_info_signal.emit('\npress_camera_button')
+        if self.CAMERA_DEBUG: self.log_info_signal.emit('\npress_camera_button')
         rc, r = self.logger.run_cmd("adb shell input keyevent = CAMERA")
         # if rc!=0: return
 
     def transfer_img(self, path='', capture_num = 1):
-        self.log_info_signal.emit("\ntransfer_img")
+        if self.CAMERA_DEBUG: self.log_info_signal.emit("\ntransfer_img")
         # list all file
         rc, r = self.logger.run_cmd("adb shell ls -lt {}".format(self.CAMERA_PATH))
         if rc!=0: return
@@ -64,8 +64,8 @@ class Capture(QWidget):
         # find the last num
         file_names = r.split('\n')[1:capture_num+1] 
         file_names = [f.split(' ')[-1].replace('\r', '') for f in file_names]
-        self.log_info_signal.emit('file_names')
-        self.log_info_signal.emit("{}".format(file_names))
+        if self.CAMERA_DEBUG: self.log_info_signal.emit('file_names')
+        if self.CAMERA_DEBUG: self.log_info_signal.emit("{}".format(file_names))
         if len(file_names)==0 or file_names[0] == '':
             self.capture_fail()
             self.log_info_signal.emit('正在重新拍攝...')
@@ -80,7 +80,7 @@ class Capture(QWidget):
                     p = str(path+".jpg")
                 else:
                     p = str(path+"_"+str(i)+".jpg")
-                self.log_info_signal.emit('transfer {} to {}'.format(file_name, p))
+                if self.CAMERA_DEBUG: self.log_info_signal.emit('transfer {} to {}'.format(file_name, p))
                 self.logger.run_cmd("adb pull {} {}".format(file_name, p))
 
     def capture_fail(self):

@@ -212,6 +212,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
 
     def initial_individual(self):
+        # 刪除資料夾
+        if os.path.exists('best'): shutil.rmtree('best')
         self.mkdir('best')
         self.set_generation_signal.emit("initialize")
 
@@ -227,7 +229,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # trial_denorm = np.around(trial_denorm, 4)
 
             # measure score
-            now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx), self.param_value, train=False)
+            now_IQM = self.measure_score_by_param_value('best/init_'+str(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             self.log_info_signal.emit('now IQM {}'.format(now_IQM))
@@ -240,13 +242,21 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 self.update_best_score(ind_idx, self.fitness[ind_idx])
 
             # 儲存xml
-            des="best/{}_{}.xml".format(self.key, ind_idx)
+            des="best/init{}.xml".format(ind_idx)
             shutil.copyfile(self.xml_path, des)
 
-        if os.path.exists("best_initial"): shutil.rmtree("best_initial")
-        shutil.copytree("best", "best_initial")
+        # # 複製整個資料夾
+        # if os.path.exists("best_initial"): shutil.rmtree("best_initial")
+        # shutil.copytree("best", "best_initial")
+        # # 刪除xml
+        # for f in os.listdir("best"):
+        #     if ".xml" in f:
+        #         os.remove("best/"+f)
+
         self.IQMs = np.array(self.IQMs)
         self.std_IQM = self.IQMs.std(axis=0)
+        # 暫時將std設為1
+        self.std_IQM = self.std_IQM = np.ones(self.target_num)
         print('std_IQM',self.std_IQM)
 
     def run_DE_for_a_generation(self, gen_idx):
@@ -266,11 +276,15 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         for ind_idx in range(self.popsize):
             self.run_DE_for_a_individual(F, Cr, gen_idx, ind_idx, gen_dir)
 
-        # 儲存xml
-        if os.path.exists("best_{}".format(gen_idx)): shutil.rmtree("best_{}".format(gen_idx))
-        shutil.copytree("best", "best_{}".format(gen_idx)) 
+        # # 複製整個資料夾
+        # if os.path.exists("best_gen{}".format(gen_idx)): shutil.rmtree("best_gen{}".format(gen_idx))
+        # shutil.copytree("best", "best_gen{}".format(gen_idx)) 
         # remove gen_dir
         shutil.rmtree(gen_dir)
+        # # 刪除xml
+        # for f in os.listdir("best"):
+        #     if ".xml" in f:
+        #         os.remove("best/"+f)
         
         self.update_rate=self.update_count/self.popsize
         self.ML_update_rate=self.ML_update_count/self.popsize
@@ -306,10 +320,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # mesure score
         # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
-        now_IQM = self.measure_score_by_param_value('{}/{}'.format(gen_dir, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
+        now_IQM = self.measure_score_by_param_value('{}/gne{}_ind{}'.format(gen_dir, gen_idx, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
         f = np.around(self.cal_score_by_weight(now_IQM), 9)
-        # self.log_info_signal.emit("now IQM {}".format(now_IQM))
-        # self.log_info_signal.emit("now fitness {}".format(f))
+        self.log_info_signal.emit("now IQM {}".format(now_IQM))
+        self.log_info_signal.emit("now fitness {}".format(f))
 
         # update dataset
         if (self.PRETRAIN or self.TRAIN):
@@ -334,28 +348,28 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.IQMs[ind_idx] = now_IQM
             self.pop[ind_idx] = trial
 
+            # 將圖片搬移到best資料夾
+            if not self.TEST_MODE:
+                for i in range(self.capture_num):
+                    if self.capture_num==1:
+                        p = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
+                    else:
+                        p = 'gne{}_ind{}_{}.jpg'.format(ind_idx, i)
+
+                    src='{}/{}'.format(gen_dir, p)
+                    des='best/{}'.format(p)
+
+                    if os.path.exists(des): os.remove(des)
+                    os.replace(src,des)
+
+            # 儲存xml
+            des="best/gen{}_ind{}.xml".format(gen_idx, ind_idx)
+            shutil.copyfile(self.xml_path, des)
+
             # 如果突變種比最優種更好
             if f < self.best_score:
                 # 替換最優種
                 self.update_best_score(ind_idx, f)
-
-                # 搬移到best資料夾
-                if not self.TEST_MODE:
-                    for i in range(self.capture_num):
-                        if self.capture_num==1:
-                            p = '{}.jpg'.format(ind_idx)
-                        else:
-                            p='{}_{}.jpg'.format(ind_idx, i)
-
-                        src='{}/{}'.format(gen_dir, p)
-                        des='best/{}'.format(p)
-
-                        if os.path.exists(des): os.remove(des)
-                        os.replace(src,des)
-
-                    # 儲存xml
-                    des="best/{}_{}.xml".format(self.key, ind_idx)
-                    shutil.copyfile(self.xml_path, des)
                     
                 if f==0:
                     self.finish_signal.emit()

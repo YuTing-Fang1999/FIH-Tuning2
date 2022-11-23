@@ -152,6 +152,7 @@ class PushAndSaveBlock(QWidget):
         self.btn_set_to_xml.setEnabled(b)
         self.btn_capture.setEnabled(b)
         self.btn_push_phone.setEnabled(b)
+        self.btn_recover_param.setEnabled(b)
 
 
     def do_capture(self):

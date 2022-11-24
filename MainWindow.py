@@ -88,6 +88,7 @@ class MainWindow(QMainWindow):
         # alert_info_signal
         self.setting.alert_info_signal.connect(self.alert_info)
         self.ROI_setting_page.alert_info_signal.connect(self.alert_info)
+        self.parameter_setting_page.push_and_save_block.alert_info_signal.connect(self.alert_info)
         self.run_page.upper_part.alert_info_signal.connect(self.alert_info)
         self.tuning.alert_info_signal.connect(self.alert_info)
         # tuning to UI

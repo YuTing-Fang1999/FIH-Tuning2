@@ -139,9 +139,10 @@ class PushAndSaveBlock(QWidget):
         self.tuning.setParamToXML(param_value)
 
     def push_phone(self):
+        self.set_data()
         path = self.data["saved_path"]
         if os.path.exists(path+".jpg"):
-            self.alert_info_signal.emit("檔名重複","檔名已存在，請重新命名")
+            self.alert_info_signal.emit("檔名重複", "檔名\n"+path+".jpg\n已存在，請重新命名")
             return
         self.set_to_xml()
         self.push_worker.start()
@@ -174,7 +175,7 @@ class PushAndSaveBlock(QWidget):
         self.ui.project_setting_page.set_data()
         path = self.data["saved_path"]
         if os.path.exists(path+".jpg"):
-            self.alert_info_signal.emit("檔名重複","檔名已存在，請重新命名")
+            self.alert_info_signal.emit("檔名重複", "檔名\n"+path+".jpg\n已存在，請重新命名")
             return
         self.capture_worker.start()
         # self.ui.capture.capture(path=path, focus_time = 3, save_time = 0.5, capture_num = 1)

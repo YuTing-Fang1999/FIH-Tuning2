@@ -501,6 +501,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         if self.key == "ASF":
             param_value = np.concatenate([[p]*64 for p in param_value])
 
+        if self.key == "ABF":
+            param_value = np.concatenate([[p]*n for p,n in zip(param_value, [2,2,1])])
+            print('setParamToXML', param_value)
+
         for i, ele in enumerate(mod_aec_datas):
             if i==self.trigger_idx:
                 rgn_data = ele.find(self.data_node)

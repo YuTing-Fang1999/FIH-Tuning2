@@ -98,15 +98,15 @@
             ],
             "name": [
                 [
-                    "noise_prsv_lo",
-                    "noise_prsv_hi",
+                    "noise_prsv_lo (2 same value)",
+                    "noise_prsv_hi (2 same value)",
                     "edge_softness"
                 ]
             ],
             "col": [
                 [
-                    2,
-                    2,
+                    1,
+                    1,
                     1
                 ]
             ]

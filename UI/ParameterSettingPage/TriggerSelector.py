@@ -76,6 +76,12 @@ class TriggerSelector(QComboBox):
                                         "layer_1_gain_weight_lut"]:
                         param_value = [param_value[0]]
                         length = 1
+                    
+                    # ABF 暫定2取1
+                    if param_name in ["noise_prsv_lo",
+                                        "noise_prsv_hi"]:
+                        param_value = [param_value[0]]
+                        length = 1
 
                     block_data['dimensions'] += length
                     block_data['lengths'].append(length)

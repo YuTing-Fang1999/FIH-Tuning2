@@ -73,8 +73,8 @@
             ],
             "name": [
                 [
-                    "positive_lut",
-                    "negative_lut"
+                    "positive_lut(64)",
+                    "negative_lut(64)"
                 ]
             ],
             "col": [
@@ -98,8 +98,8 @@
             ],
             "name": [
                 [
-                    "noise_prsv_lo (2 same value)",
-                    "noise_prsv_hi (2 same value)",
+                    "noise_prsv_lo (2)",
+                    "noise_prsv_hi (2)",
                     "edge_softness"
                 ]
             ],

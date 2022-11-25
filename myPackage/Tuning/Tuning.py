@@ -80,9 +80,6 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
 
-        self.tab_info.show_info("\n###### Project Setting ######")
-        self.show_info_by_key(["platform", "project_path", "exe_path", "bin_name"], self.data)
-
         self.tab_info.show_info("\n###### Target ######")
         self.show_info_by_key(["target_type", "target_score", "target_weight"], self.data)
 
@@ -97,6 +94,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         self.tab_info.show_info("\n###### Mode ######")
         self.show_info_by_key(["TEST_MODE","PRETRAIN","TRAIN"], self.data)
+
+        self.tab_info.show_info("\n###### Project Setting ######")
+        self.show_info_by_key(["platform", "project_path", "exe_path", "bin_name"], self.data)
 
     def run(self):
         self.TEST_MODE = self.data["TEST_MODE"]

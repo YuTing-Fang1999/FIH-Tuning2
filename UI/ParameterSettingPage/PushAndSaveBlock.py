@@ -38,6 +38,8 @@ class PushWorker(QThread):
         self.capture_signal.emit()
 
 class PushAndSaveBlock(QWidget):
+    alert_info_signal = pyqtSignal(str, str)
+
     def __init__(self, ui):
         super().__init__()
         self.ui = ui 
@@ -105,12 +107,19 @@ class PushAndSaveBlock(QWidget):
     def setup_controller(self):
         self.btn_set_to_xml.clicked.connect(self.set_to_xml)
         self.btn_push_phone.clicked.connect(self.push_phone)
-        self.btn_capture.clicked.connect(self.do_capture)
         self.btn_recover_param.clicked.connect(self.recover_param)
 
     def set_data(self):
         self.data['saved_dir_name'] = self.lineEdits_dir_name.text()
         self.data['saved_img_name'] = self.lineEdits_img_name.text()
+
+        dir_name = self.data["saved_dir_name"]
+        img_name = self.data["saved_img_name"]
+
+        if dir_name=="": dir_name="test"
+        self.ui.tuning.mkdir(dir_name)
+
+        self.data["saved_path"] = "{}/{}".format(dir_name, img_name)
 
     def set_to_xml(self):
         param_value = self.get_param_value()
@@ -130,6 +139,11 @@ class PushAndSaveBlock(QWidget):
         self.tuning.setParamToXML(param_value)
 
     def push_phone(self):
+        self.set_data()
+        path = self.data["saved_path"]
+        if os.path.exists(path+".jpg"):
+            self.alert_info_signal.emit("檔名重複", "檔名\n"+path+".jpg\n已存在，請重新命名")
+            return
         self.set_to_xml()
         self.push_worker.start()
 
@@ -156,18 +170,13 @@ class PushAndSaveBlock(QWidget):
 
 
     def do_capture(self):
-        self.set_data()
-        dir_name = self.data["saved_dir_name"]
-        img_name = self.data["saved_img_name"]
-
-        if dir_name=="": dir_name="test"
-        self.ui.tuning.mkdir(dir_name)
-
-        path = "{}/{}".format(dir_name, img_name)
-
-        self.data["saved_path"] = path
         print("PushAndSaveBlock do_capture")
+        self.set_data()
         self.ui.project_setting_page.set_data()
+        path = self.data["saved_path"]
+        if os.path.exists(path+".jpg"):
+            self.alert_info_signal.emit("檔名重複", "檔名\n"+path+".jpg\n已存在，請重新命名")
+            return
         self.capture_worker.start()
         # self.ui.capture.capture(path=path, focus_time = 3, save_time = 0.5, capture_num = 1)
 

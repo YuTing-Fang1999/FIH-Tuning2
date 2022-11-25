@@ -219,6 +219,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # initial individual
         for ind_idx in range(self.popsize):
+            self.mkdir('best/'+str(ind_idx))
             self.set_individual_signal.emit(str(ind_idx))
             self.log_info_signal.emit('\ninitial individual: {}'.format(ind_idx))
 
@@ -229,7 +230,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # trial_denorm = np.around(trial_denorm, 4)
 
             # measure score
-            now_IQM = self.measure_score_by_param_value('best/init_'+str(ind_idx), self.param_value, train=False)
+            now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx)+'/init_'+str(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             self.log_info_signal.emit('now IQM {}'.format(now_IQM))
@@ -354,10 +355,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                     if self.capture_num==1:
                         p = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
                     else:
-                        p = 'gne{}_ind{}_{}.jpg'.format(ind_idx, i)
+                        p = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
 
                     src='{}/{}'.format(gen_dir, p)
-                    des='best/{}'.format(p)
+                    des='best/{}/{}'.format(ind_idx, p)
 
                     if os.path.exists(des): os.remove(des)
                     os.replace(src,des)

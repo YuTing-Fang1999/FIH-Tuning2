@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
         self.capture.capture_fail_signal.connect(self.capture_fail)
         # alert_info_signal
         self.setting.alert_info_signal.connect(self.alert_info)
+        self.project_setting_page.alert_info_signal.connect(self.alert_info)
         self.ROI_setting_page.alert_info_signal.connect(self.alert_info)
         self.parameter_setting_page.push_and_save_block.alert_info_signal.connect(self.alert_info)
         self.run_page.upper_part.alert_info_signal.connect(self.alert_info)
@@ -141,6 +142,7 @@ class MainWindow(QMainWindow):
         if self.tuning.ML: self.tuning.ML.save_model()
 
         print('window close')
+        self.setting.set_data(alert=False)
         self.setting.write_setting()
 
 

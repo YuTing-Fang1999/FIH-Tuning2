@@ -15,12 +15,12 @@ class Setting(QWidget):
 
     def set_data(self, alert=True):
         print('setting: set data')
-        if self.ui.project_setting_page.set_data() and alert:
-            self.alert_info_signal.emit("參數未填完", "project部分的參數未填完")
+        if not self.ui.project_setting_page.set_data(alert) and alert:
+            self.alert_info_signal.emit("資料有誤或未填完", "「選擇project」的資料未填完")
             return False
 
         if self.ui.ROI_setting_page.set_data() and alert:
-            self.alert_info_signal.emit("參數未填完", "ROI設置部分的參數未填完")
+            self.alert_info_signal.emit("資料有誤或未填完", "「ROI設定」的資料未填完")
             return False
 
         if self.ui.parameter_setting_page.param_modify_block.set_data() and alert:
@@ -53,7 +53,6 @@ class Setting(QWidget):
 
     def write_setting(self):
         print('write_setting')
-        self.set_data(alert=False)
         with open("setting.json", "w") as outfile:
             outfile.write(json.dumps(self.data, indent=4))
 

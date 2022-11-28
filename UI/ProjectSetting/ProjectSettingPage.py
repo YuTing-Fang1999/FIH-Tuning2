@@ -4,9 +4,11 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from .PlatformSelecter import PlatformSelecter
+import os
 
 class ProjectSettingPage(QWidget):
     set_project_signal = pyqtSignal(str)
+    alert_info_signal = pyqtSignal(str, str)
 
     def __init__(self, ui):
         super().__init__()
@@ -101,8 +103,20 @@ class ProjectSettingPage(QWidget):
         self.label_exe_path.setText(filename)
         self.data["exe_path"] = filename
 
-    def set_data(self):
+    def set_data(self, alert=True):
         print('set ProjectSettingPage data')
         self.data["project_path"] = self.label_project_path.text()
         self.data["exe_path"] = self.label_exe_path.text()
         self.data["bin_name"] = self.lineEdits_bin_name.text()
+        if not os.path.exists(self.data["project_path"]) and alert:
+            self.alert_info_signal.emit("找不到project_path", "找不到project_path: "+self.data["project_path"])
+            return False
+
+        if not os.path.exists(self.data["exe_path"]) and alert:
+            self.alert_info_signal.emit("找不到exe_path", "找不到exe_path: "+self.data["exe_path"])
+            return False
+
+        if self.data["bin_name"]=="" and alert:
+            self.alert_info_signal.emit("bin檔名稱未填寫", "請填寫bin檔名稱\n注意bin檔名稱一定要填正確")
+            return False
+

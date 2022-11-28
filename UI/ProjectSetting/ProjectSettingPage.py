@@ -119,4 +119,6 @@ class ProjectSettingPage(QWidget):
         if self.data["bin_name"]=="" and alert:
             self.alert_info_signal.emit("bin檔名稱未填寫", "請填寫bin檔名稱\n注意bin檔名稱一定要填正確")
             return False
+        
+        return True
 

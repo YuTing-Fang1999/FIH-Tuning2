@@ -17,6 +17,7 @@ import cv2
 import math
 import threading
 import shutil
+import json
 
 class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     finish_signal = pyqtSignal()
@@ -139,6 +140,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.param_change_idx = block_data['param_change_idx'] # 需要tune的參數位置
         self.param_change_num = len(self.param_change_idx) # 需要tune的參數個數
         self.trigger_idx = self.data["trigger_idx"]
+        self.trigger_name = self.data["trigger_name"]
         # test mode 下沒改動的地方為0
         if self.TEST_MODE: self.param_value = np.zeros(self.dimensions)
 
@@ -353,15 +355,32 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if not self.TEST_MODE:
                 for i in range(self.capture_num):
                     if self.capture_num==1:
-                        p = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
+                        src_img = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
+                        des_img = '{}.jpg'.format(f) # 根據量化分數命名
+                        
                     else:
-                        p = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
+                        src_img = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
+                        des_img = '{}_{}.jpg'.format(f, i) # 根據量化分數命名
 
-                    src='{}/{}'.format(gen_dir, p)
-                    des='best/{}/{}'.format(ind_idx, p)
+                    src='{}/{}'.format(gen_dir, src_img)
+                    des='best/{}'.format(des_img) # 根據量化分數命名
 
                     if os.path.exists(des): os.remove(des)
                     os.replace(src,des)
+            # 儲存json
+            info = {
+                "name": 'gne{}_ind{}'.format(gen_idx ,ind_idx),
+                "param_block": self.key,
+                "trigger_block": self.trigger_name,
+                "param_name": self.param_names,
+                "param_value": self.param_value,
+                "target_type": self.target_type,
+                "target_IQM": self.target_IQM,
+                "now_IQM": now_IQM,
+                "score": f
+            }
+            with open('gne{}_ind{}.json'.format(gen_idx ,ind_idx), "w") as outfile:
+                outfile.write(json.dumps(info, indent=4))
 
             # 儲存xml
             des="best/gen{}_ind{}.xml".format(gen_idx, ind_idx)

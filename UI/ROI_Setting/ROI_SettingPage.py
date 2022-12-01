@@ -140,6 +140,7 @@ class ROI_SettingPage(QWidget):
         self.measure_window.measure_target(my_x_y_w_h, target_roi_img)
 
     def set_target_score(self, my_x_y_w_h, target_type, target_score):
+        
         for i in range(len(target_type)):
             self.add_to_table(target_type[i], target_score[i], 1)
             self.data["roi"].append(my_x_y_w_h)

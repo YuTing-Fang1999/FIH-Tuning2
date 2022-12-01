@@ -59,13 +59,15 @@ class MeasureWindow(QWidget):
         self.calFunc["luma stdev"] = get_luma_stdev
         self.calFunc["chroma stdev"] = get_chroma_stdev
         self.calFunc["sharpness"] = get_sharpness
+        self.calFunc["DL accutance"] = get_average_gnorm
         
     def setup_UI(self):
         self.resize(800, 600)
 
-        self.type_name = ["luma stdev", "chroma stdev", "sharpness"]
+        self.type_name = ["luma stdev", "chroma stdev", "sharpness", "DL accutance"]
         tip = [
             "噪聲\n方法取自J. Immerkær, “Fast Noise Variance Estimation”這篇論文",
+            "",
             "",
             ""
         ]
@@ -95,7 +97,7 @@ class MeasureWindow(QWidget):
         self.block.img_block.setPhoto(target_roi_img)
 
         self.score_value = []
-        for i in range(3):
+        for i in range(len(self.type_name)):
             v = self.calFunc[self.type_name[i]](target_roi_img)
             v = np.around(v, 5)
             self.block.score_block.label_score[i].setText(str(v))
@@ -106,7 +108,7 @@ class MeasureWindow(QWidget):
     def btn_ok_function(self):
         target_type = []
         score_value = []
-        for i in range(3):
+        for i in range(len(self.type_name)):
             if self.block.score_block.check_box[i].isChecked():
                 target_type.append(self.type_name[i])
                 score_value.append(self.score_value[i])

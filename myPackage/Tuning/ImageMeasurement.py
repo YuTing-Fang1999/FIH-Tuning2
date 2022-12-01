@@ -25,3 +25,12 @@ def get_luma_stdev(img):
     sigma = sigma * math.sqrt(0.5 * math.pi) / (6 * (W-2) * (H-2))
 
     return sigma
+
+def get_average_gnorm(img):
+        # https://stackoverflow.com/questions/6646371/detect-which-image-is-sharper
+        I = img.copy()
+        I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY).astype('float64')
+        gy, gx = np.gradient(I)
+        gnorm = np.sqrt(gx**2 + gy**2)
+        sharpness = np.average(gnorm)
+        return np.round(sharpness, 4)

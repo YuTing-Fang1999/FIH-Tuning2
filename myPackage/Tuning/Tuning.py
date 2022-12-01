@@ -51,6 +51,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.calFunc["sharpness"] = get_sharpness
         self.calFunc["chroma stdev"] = get_chroma_stdev
         self.calFunc["luma stdev"] = get_luma_stdev
+        self.calFunc["DL accutance"] = get_average_gnorm
 
         # plot
         self.bset_score_plot = MplCanvasTiming(
@@ -100,6 +101,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.show_info_by_key(["platform", "project_path", "exe_path", "bin_name"], self.data)
 
     def run(self):
+        self.measure_data = {}
+        
         self.TEST_MODE = self.data["TEST_MODE"]
         self.PRETRAIN = self.data["PRETRAIN"]
         self.TRAIN = self.data["TRAIN"]
@@ -217,11 +220,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # 刪除資料夾
         if os.path.exists('best'): shutil.rmtree('best')
         self.mkdir('best')
+        self.mkdir('best/xml')
+        self.mkdir('best/init')
         self.set_generation_signal.emit("initialize")
 
         # initial individual
         for ind_idx in range(self.popsize):
-            self.mkdir('best/'+str(ind_idx))
             self.set_individual_signal.emit(str(ind_idx))
             self.log_info_signal.emit('\ninitial individual: {}'.format(ind_idx))
 
@@ -232,7 +236,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # trial_denorm = np.around(trial_denorm, 4)
 
             # measure score
-            now_IQM = self.measure_score_by_param_value('best/'+str(ind_idx)+'/init_'+str(ind_idx), self.param_value, train=False)
+            now_IQM = self.measure_score_by_param_value('best/init/init_'+str(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             self.log_info_signal.emit('now IQM {}'.format(now_IQM))
@@ -241,26 +245,56 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, self.fitness[ind_idx], now_IQM)
 
-            if self.fitness[ind_idx] < self.best_score:
-                self.update_best_score(ind_idx, self.fitness[ind_idx])
+            # if self.fitness[ind_idx] < self.best_score:
+            #     self.update_best_score(ind_idx, self.fitness[ind_idx])
 
             # 儲存xml
-            des="best/init{}.xml".format(ind_idx)
+            des="best/xml/init_{}.xml".format(ind_idx)
             shutil.copyfile(self.xml_path, des)
 
-        # # 複製整個資料夾
-        # if os.path.exists("best_initial"): shutil.rmtree("best_initial")
-        # shutil.copytree("best", "best_initial")
-        # # 刪除xml
-        # for f in os.listdir("best"):
-        #     if ".xml" in f:
-        #         os.remove("best/"+f)
 
         self.IQMs = np.array(self.IQMs)
         self.std_IQM = self.IQMs.std(axis=0)
+        # 依據標準差重新計算
+        for ind_idx in range(self.popsize):
+            self.fitness[ind_idx] = np.around(self.cal_score_by_weight(self.IQMs[ind_idx]), 9)
+            # 將圖片搬移到best資料夾
+            if not self.TEST_MODE:
+                for i in range(self.capture_num):
+                    if self.capture_num==1:
+                        src_img = 'init_{}.jpg'.format(ind_idx)
+                        des_img = '{}.jpg'.format(self.fitness[ind_idx]) # 以量化分數命名
+                        
+                    else:
+                        src_img = 'init_{}_{}.jpg'.format(ind_idx, i)
+                        des_img = '{}_{}.jpg'.format(self.fitness[ind_idx], i) # 以量化分數命名
+
+                    src='best/init/{}'.format(src_img)
+                    des='best/{}'.format(des_img) 
+
+                    if os.path.exists(des): os.remove(des)
+                    os.replace(src, des)
+
+            # 儲存json
+            info = {
+                "target_type": self.target_type.tolist(),
+                "target_IQM": self.target_IQM.tolist(),
+                "now_IQM": now_IQM.tolist(),
+                "name": 'init{}'.format(ind_idx),
+                "param_block": self.key,
+                "trigger_block": self.trigger_name,
+            }
+            with open('best/{}.json'.format(self.fitness[ind_idx]), "w") as outfile:
+                outfile.write(json.dumps(info, indent=4))
+
+            if self.fitness[ind_idx] < self.best_score:
+                self.update_best_score(ind_idx, self.fitness[ind_idx])
+
         # 暫時將std設為1
-        self.std_IQM = self.std_IQM = np.ones(self.target_num)
+        # self.std_IQM = self.std_IQM = np.ones(self.target_num)
         print('std_IQM',self.std_IQM)
+
+        shutil.rmtree("best/init")
 
     def run_DE_for_a_generation(self, gen_idx):
         self.set_generation_signal.emit(str(gen_idx))
@@ -369,21 +403,21 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                     os.replace(src,des)
             # 儲存json
             info = {
+                "target_type": self.target_type.tolist(),
+                "target_IQM": self.target_IQM.tolist(),
+                "now_IQM": now_IQM.tolist(),
+                "score": f,
                 "name": 'gne{}_ind{}'.format(gen_idx ,ind_idx),
                 "param_block": self.key,
                 "trigger_block": self.trigger_name,
                 "param_name": self.param_names,
-                "param_value": self.param_value,
-                "target_type": self.target_type,
-                "target_IQM": self.target_IQM,
-                "now_IQM": now_IQM,
-                "score": f
+                "param_value": self.param_value.tolist(),
             }
-            with open('gne{}_ind{}.json'.format(gen_idx ,ind_idx), "w") as outfile:
+            with open('best/{}.json'.format(f), "w") as outfile:
                 outfile.write(json.dumps(info, indent=4))
 
             # 儲存xml
-            des="best/gen{}_ind{}.xml".format(gen_idx, ind_idx)
+            des="best/xml/{}.xml".format(f)
             shutil.copyfile(self.xml_path, des)
 
             # 如果突變種比最優種更好
@@ -566,7 +600,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     def buildAndPushToCamera(self, exe_path, project_path, bin_name):
         self.log_info_signal.emit('push bin to camera...')
         self.run_cmd_signal.emit('adb shell input keyevent = KEYCODE_HOME')
-        self.run_cmd_signal.emit("build_and_push.bat {} {} {}".format(exe_path, project_path, bin_name))
+        os.system("build_and_push.bat {} {} {}".format(exe_path, project_path, bin_name))
+        # self.run_cmd_signal.emit("build_and_push.bat {} {} {}".format(exe_path, project_path, bin_name))
         self.capture.clear_camera_folder()
         self.log_info_signal.emit('wait for reboot camera...')
 

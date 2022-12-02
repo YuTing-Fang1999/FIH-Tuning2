@@ -57,6 +57,7 @@ class CurveSlider(QWidget):
 
         #創建標籤，居中
         self.label_plot = QLabel()
+        self.label_plot.setFixedHeight(200)
         plot_wraprt = QVBoxLayout()
         plot_wraprt.addWidget(self.label_plot)
         Vlayout.addLayout(plot_wraprt)

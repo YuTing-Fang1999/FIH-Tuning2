@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 )
 
 from PyQt5 import QtCore
+from .CurveSlider import CurveSlider
 
 class GridModifyItem(QWidget):
 
@@ -102,6 +103,10 @@ class ParamModifyBlock(QWidget):
                     if idx not in block_data['param_change_idx']:
                         P.checkBoxes[i].setChecked(True)
                     idx += 1
+
+        if key=="ASF":
+            self.slider = CurveSlider()
+            self.VLayout.addWidget(self.slider)
 
 
     def update_param_value_UI(self, param_value):

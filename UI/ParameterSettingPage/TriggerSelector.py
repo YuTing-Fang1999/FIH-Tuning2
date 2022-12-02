@@ -56,6 +56,7 @@ class TriggerSelector(QComboBox):
                 for param_name in config['param_names']:
                     parent = rgn_data.find(param_name+'_tab')
                     if parent:
+                        print(parent.find(param_name).text)
                         param_value = parent.find(param_name).text.split(' ') 
                         param_value = [float(x) for x in param_value]
 
@@ -82,6 +83,11 @@ class TriggerSelector(QComboBox):
                                         "noise_prsv_hi"]:
                         param_value = [param_value[0]]
                         length = 1
+
+                    # WNR 暫定2取1
+                    if param_name in ["denoise_weight_y", "denoise_weight_chroma"]:
+                        param_value = [param_value[0],param_value[2]]
+                        length = 2
 
                     block_data['dimensions'] += length
                     block_data['lengths'].append(length)

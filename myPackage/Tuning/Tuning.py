@@ -18,6 +18,7 @@ import math
 import threading
 import shutil
 import json
+from random import randrange
 
 class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     finish_signal = pyqtSignal()
@@ -47,11 +48,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.PRETRAIN = False
         self.TRAIN = False
 
-        self.calFunc = {}
-        self.calFunc["sharpness"] = get_sharpness
-        self.calFunc["chroma stdev"] = get_chroma_stdev
-        self.calFunc["luma stdev"] = get_luma_stdev
-        self.calFunc["DL accutance"] = get_average_gnorm
+        self.calFunc = get_cal_func()
 
         # plot
         self.bset_score_plot = MplCanvasTiming(
@@ -132,8 +129,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.capture_num = self.data['capture num']
         # self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.6, method="exponantial_reverse", rate = 0.03)
         # self.F_optimiter = HyperOptimizer(init_value=1.2, final_value=0.7, method="exponantial", rate=0.5)
-        self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
-        self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
+        self.F_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
+        self.Cr_optimiter = HyperOptimizer(init_value=0.2, final_value=0.2, method="constant")
         
         # params
         self.param_names = config['param_names']
@@ -170,8 +167,22 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.diff = np.fabs(self.min_b - self.max_b)
 
         # initialize population and normalize to [0, 1]
+        # self.pop = []
+        # for i in range(self.popsize):
+        #     self.pop.append(np.random.choice(np.arange(0, 1, 0.05), size=self.param_change_num))
+        #     self.pop[i][1]=self.pop[i][0]+np.random.choice(np.arange(-0.2, 0.2, 0.05), size=1)[0]
+        #     self.pop[i][3]=self.pop[i][2]+np.random.choice(np.arange(-0.2, 0.2, 0.05), size=1)[0]
+        # self.pop = np.array(self.pop)
+        # np.clip(self.pop, 0, 1)
+
+        
         self.pop = np.random.rand(self.popsize, self.param_change_num)
         self.pop = np.around(self.pop, 4) # 精度到小數點4位
+        if self.key=="ASF":
+            for i in range(self.popsize):
+                if self.pop[i][0]>self.pop[i][1]:
+                    self.pop[i][0], self.pop[i][1] = self.pop[i][1], self.pop[i][0]
+        print(self.pop)
 
         # score
         self.best_score = 1e9
@@ -279,7 +290,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             info = {
                 "target_type": self.target_type.tolist(),
                 "target_IQM": self.target_IQM.tolist(),
-                "now_IQM": now_IQM.tolist(),
+                "now_IQM": self.IQMs[ind_idx].tolist(),
                 "name": 'init{}'.format(ind_idx),
                 "param_block": self.key,
                 "trigger_block": self.trigger_name,
@@ -331,6 +342,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.set_individual_signal.emit(str(ind_idx))
 
         trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+        while(self.is_bad_trail(trial)):
+            trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+
         # update param_value
         self.param_value[self.param_change_idx] = trial_denorm
 
@@ -476,6 +490,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         else: 
             return bad_num >= np.ceil(self.target_num/2)
 
+    def is_bad_trail(self, trial):
+        if self.key=="ASF":
+            return trial[0]>trial[1]
+        else: return False
 
     def generate_parameters(self, ind_idx, F, Cr):
         # select all pop except j
@@ -483,8 +501,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # random select three pop except j
         a, b, c = self.pop[np.random.choice(idxs, 3, replace=False)]
 
+        vec = F * (b - c)
+        # vec[vec>0 & vec<0.05] = 0.05
         # Mutation
-        mutant = np.clip(a + F * (b - c), 0, 1)
+        mutant = np.clip(a + vec, 0, 1)
 
         # random choose the dimensions
         cross_points = np.random.rand(self.param_change_num) < Cr
@@ -557,6 +577,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         if self.key == "ABF":
             param_value = np.concatenate([[p]*n for p,n in zip(param_value, [2,2,1])])
+            print('setParamToXML', param_value)
+
+        if self.key == "WNR":
+            param_value = np.concatenate([[p]*n for p,n in zip(param_value, [2,1,2,2])])
             print('setParamToXML', param_value)
 
         for i, ele in enumerate(mod_aec_datas):

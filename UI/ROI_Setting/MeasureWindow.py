@@ -53,31 +53,20 @@ class MeasureWindow(QWidget):
     
     def __init__(self):
         super().__init__()  
-        self.setup_UI()
 
-        self.calFunc = {}
-        self.calFunc["luma stdev"] = get_luma_stdev
-        self.calFunc["chroma stdev"] = get_chroma_stdev
-        self.calFunc["sharpness"] = get_sharpness
-        self.calFunc["DL accutance"] = get_average_gnorm
+        self.calFunc = get_cal_func()
+        self.type_name, self.tip = get_type_name_and_tip()
+        self.setup_UI()
         
     def setup_UI(self):
         self.resize(800, 600)
-
-        self.type_name = ["luma stdev", "chroma stdev", "sharpness", "DL accutance"]
-        tip = [
-            "噪聲\n方法取自J. Immerkær, “Fast Noise Variance Estimation”這篇論文",
-            "",
-            "",
-            ""
-        ]
 
         self.VLayout = QVBoxLayout(self)
         self.VLayout.setAlignment(Qt.AlignCenter)
         self.VLayout.setContentsMargins(50, 50, 50, 50)
 
         HLayout = QHBoxLayout()
-        self.block = Block(self.type_name, tip)
+        self.block = Block(self.type_name, self.tip)
         HLayout.addWidget(self.block)
         self.VLayout.addLayout(HLayout)
 

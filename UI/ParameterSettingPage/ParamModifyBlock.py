@@ -29,6 +29,7 @@ class GridModifyItem(QWidget):
 
         self.checkBoxes_title = QCheckBox()
         title_wraper.addWidget(self.checkBoxes_title)
+        VLayout.addLayout(title_wraper)
 
         idx = len(self.checkBoxes)
         for i in range(sum(col)):
@@ -40,6 +41,7 @@ class GridModifyItem(QWidget):
             self.lineEdits.append(lineEdit)
 
         for i in range(len(col)):
+
             label_name = QLabel()
             label_name.setText(name[i])
             label_name.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -49,10 +51,14 @@ class GridModifyItem(QWidget):
 
             for j in range(col[i]):
                 gridLayout.addWidget(self.checkBoxes[idx], i, 2+j*2)
-                gridLayout.addWidget(self.lineEdits[idx], i, 1+j*2)
+                if name[i] == "layer_1_gain_weight_lut":
+                    self.slider = CurveSlider()
+                    gridLayout.addWidget(self.slider, i, 1+j*2)
+                else:
+                    gridLayout.addWidget(self.lineEdits[idx], i, 1+j*2)
                 idx += 1
+            
 
-        VLayout.addLayout(title_wraper)
         VLayout.addLayout(gridLayout)
 
         self.checkBoxes_title.clicked.connect(self.toggle_title_checkBoxes)
@@ -91,9 +97,9 @@ class ParamModifyBlock(QWidget):
 
         self.param_modify_items = []
         for i in range(len(config["title"])):
-            item = GridModifyItem(config["title"][i], config["name"][i], config["col"][i])
-            self.param_modify_items.append(item)
-            self.VLayout.addWidget(item)
+                item = GridModifyItem(config["title"][i], config["name"][i], config["col"][i])
+                self.param_modify_items.append(item)
+                self.VLayout.addWidget(item)
 
         block_data = self.data[root][key]
         if "param_change_idx" in block_data:
@@ -103,10 +109,6 @@ class ParamModifyBlock(QWidget):
                     if idx not in block_data['param_change_idx']:
                         P.checkBoxes[i].setChecked(True)
                     idx += 1
-
-        if key=="ASF":
-            self.slider = CurveSlider()
-            self.VLayout.addWidget(self.slider)
 
 
     def update_param_value_UI(self, param_value):

@@ -19,6 +19,8 @@ import threading
 import shutil
 import json
 from random import randrange
+import csv
+from decimal import Decimal
 
 class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     finish_signal = pyqtSignal()
@@ -106,16 +108,13 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         ##### param setting #####
         self.key = self.data["page_key"]
-        config = self.config[self.data["page_root"]][self.data["page_key"]]
+        self.config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
         # xml path
-        self.xml_path = self.data['xml_path']+config["file_path"]
-        self.xml_node = config["xml_node"]
-        self.data_node = config["data_node"]
+        self.xml_path = self.data['xml_path']+self.config["file_path"]
         if not os.path.exists(self.xml_path):
             self.log_info_signal.emit("The {} doesn't exists".format(self.xml_path))
-            # print("The", self.xml_path, "doesn't exists")
             self.finish_signal.emit()
             sys.exit()
 
@@ -133,7 +132,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.Cr_optimiter = HyperOptimizer(init_value=0.2, final_value=0.2, method="constant")
         
         # params
-        self.param_names = config['param_names']
+        self.param_names = self.config['param_names']
         self.bounds = block_data['bounds']
         self.dimensions = block_data['dimensions']
         self.param_value = np.array(block_data['param_value']) # 所有參數值
@@ -165,24 +164,13 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.min_b = self.min_b[self.param_change_idx]
         self.max_b = self.max_b[self.param_change_idx]
         self.diff = np.fabs(self.min_b - self.max_b)
-
-        # initialize population and normalize to [0, 1]
-        # self.pop = []
-        # for i in range(self.popsize):
-        #     self.pop.append(np.random.choice(np.arange(0, 1, 0.05), size=self.param_change_num))
-        #     self.pop[i][1]=self.pop[i][0]+np.random.choice(np.arange(-0.2, 0.2, 0.05), size=1)[0]
-        #     self.pop[i][3]=self.pop[i][2]+np.random.choice(np.arange(-0.2, 0.2, 0.05), size=1)[0]
-        # self.pop = np.array(self.pop)
-        # np.clip(self.pop, 0, 1)
-
         
         self.pop = np.random.rand(self.popsize, self.param_change_num)
         self.pop = np.around(self.pop, 4) # 精度到小數點4位
-        if self.key=="ASF":
-            for i in range(self.popsize):
-                if self.pop[i][0]>self.pop[i][1]:
-                    self.pop[i][0], self.pop[i][1] = self.pop[i][1], self.pop[i][0]
-        print(self.pop)
+        # step
+        pop_denorm = self.min_b + self.pop * self.diff
+        pop_denorm = self.round_nearest(pop_denorm, self.config["step"])
+        self.pop = (pop_denorm-self.min_b)/self.diff
 
         # score
         self.best_score = 1e9
@@ -199,6 +187,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.alert_info_signal.emit("請先圈ROI", "請先圈ROI")
             self.finish_signal.emit()
             return
+
+        # csv data
+        title = ["name", "score"]
+        for t in self.target_type: title.append(t)
+        title.append(self.param_names)
+        self.csv_data = [title]
 
         ##### start tuning #####
         # setup
@@ -232,7 +226,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         if os.path.exists('best'): shutil.rmtree('best')
         self.mkdir('best')
         self.mkdir('best/xml')
-        self.mkdir('best/init')
+        self.mkdir('best/img')
+        # self.mkdir('best/init')
         self.set_generation_signal.emit("initialize")
 
         # initial individual
@@ -247,7 +242,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # trial_denorm = np.around(trial_denorm, 4)
 
             # measure score
-            now_IQM = self.measure_score_by_param_value('best/init/init_'+str(ind_idx), self.param_value, train=False)
+            now_IQM = self.measure_score_by_param_value('best/init_'+str(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             self.log_info_signal.emit('now IQM {}'.format(now_IQM))
@@ -256,12 +251,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, self.fitness[ind_idx], now_IQM)
 
-            # if self.fitness[ind_idx] < self.best_score:
-            #     self.update_best_score(ind_idx, self.fitness[ind_idx])
-
             # 儲存xml
             des="best/xml/init_{}.xml".format(ind_idx)
             shutil.copyfile(self.xml_path, des)
+            # csv data
+            data = ["init_{}".format(ind_idx), 0]
+            for IQM in now_IQM: data.append(IQM)
+            data.append(trial_denorm)
+            self.csv_data.append(data)
 
 
         self.IQMs = np.array(self.IQMs)
@@ -269,22 +266,24 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # 依據標準差重新計算
         for ind_idx in range(self.popsize):
             self.fitness[ind_idx] = np.around(self.cal_score_by_weight(self.IQMs[ind_idx]), 9)
+            self.csv_data[ind_idx+1][1] = self.fitness[ind_idx]
+
             # 將圖片搬移到best資料夾
-            if not self.TEST_MODE:
-                for i in range(self.capture_num):
-                    if self.capture_num==1:
-                        src_img = 'init_{}.jpg'.format(ind_idx)
-                        des_img = '{}.jpg'.format(self.fitness[ind_idx]) # 以量化分數命名
+            # if not self.TEST_MODE:
+            #     for i in range(self.capture_num):
+            #         if self.capture_num==1:
+            #             src_img = 'init_{}.jpg'.format(ind_idx)
+            #             des_img = 'init_{}.jpg'.format(ind_idx) 
                         
-                    else:
-                        src_img = 'init_{}_{}.jpg'.format(ind_idx, i)
-                        des_img = '{}_{}.jpg'.format(self.fitness[ind_idx], i) # 以量化分數命名
+            #         else:
+            #             src_img = 'init_{}_{}.jpg'.format(ind_idx, i)
+            #             des_img = 'init_{}_{}.jpg'.format(ind_idx, i) 
 
-                    src='best/init/{}'.format(src_img)
-                    des='best/{}'.format(des_img) 
+            #         src='best/init/{}'.format(src_img)
+            #         des='best/{}'.format(des_img) 
 
-                    if os.path.exists(des): os.remove(des)
-                    os.replace(src, des)
+            #         if os.path.exists(des): os.remove(des)
+            #         os.replace(src, des)
 
             # 儲存json
             info = {
@@ -305,14 +304,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # self.std_IQM = self.std_IQM = np.ones(self.target_num)
         print('std_IQM',self.std_IQM)
 
-        shutil.rmtree("best/init")
+        # shutil.rmtree("best/init")
 
     def run_DE_for_a_generation(self, gen_idx):
         self.set_generation_signal.emit(str(gen_idx))
 
         # create dir
         gen_dir = 'generation{}'.format(gen_idx)
-        self.mkdir(gen_dir)
+        # self.mkdir(gen_dir)
 
         # update hyperparam
         F = self.F_optimiter.update(gen_idx)
@@ -323,19 +322,13 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         for ind_idx in range(self.popsize):
             self.run_DE_for_a_individual(F, Cr, gen_idx, ind_idx, gen_dir)
-
-        # # 複製整個資料夾
-        # if os.path.exists("best_gen{}".format(gen_idx)): shutil.rmtree("best_gen{}".format(gen_idx))
-        # shutil.copytree("best", "best_gen{}".format(gen_idx)) 
-        # remove gen_dir
-        shutil.rmtree(gen_dir)
-        # # 刪除xml
-        # for f in os.listdir("best"):
-        #     if ".xml" in f:
-        #         os.remove("best/"+f)
         
         self.update_rate=self.update_count/self.popsize
         self.ML_update_rate=self.ML_update_count/self.popsize
+
+        with open('best/gen{}.csv'.format(gen_idx), 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(self.csv_data)
         
 
     def run_DE_for_a_individual(self, F, Cr, gen_idx, ind_idx, gen_dir):
@@ -371,10 +364,15 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # mesure score
         # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
-        now_IQM = self.measure_score_by_param_value('{}/gne{}_ind{}'.format(gen_dir, gen_idx, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
+        now_IQM = self.measure_score_by_param_value('best/gne{}_ind{}'.format(gen_idx, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
         f = np.around(self.cal_score_by_weight(now_IQM), 9)
         self.log_info_signal.emit("now IQM {}".format(now_IQM))
         self.log_info_signal.emit("now fitness {}".format(f))
+
+        data = ['gne{}_ind{}'.format(gen_idx, ind_idx), f]
+        for IQM in now_IQM: data.append(IQM)
+        data.append(trial_denorm)
+        self.csv_data.append(data)
 
         # update dataset
         if (self.PRETRAIN or self.TRAIN):
@@ -473,27 +471,44 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 if good_num==self.target_num:
                     break
 
-            trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+            # trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+            while(self.is_bad_trail(trial)):
+                trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
 
         self.log_info_signal.emit("times: {}".format(times))  
         return best_trial, best_trial_denorm
 
-    def is_bad(self, trial, ind_idx, times):
-        x = np.zeros(self.dimensions)
-        x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
-        diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
-        pred_dif_IQM = self.ML.predict(x)
-        ##### 更改判斷標準(bad大於半數) #####
-        bad_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0)
-        if times<10:
-            return bad_num >= 1
-        else: 
-            return bad_num >= np.ceil(self.target_num/2)
+    # def is_bad(self, trial, ind_idx, times):
+    #     x = np.zeros(self.dimensions)
+    #     x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
+    #     diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
+    #     pred_dif_IQM = self.ML.predict(x)
+    #     ##### 更改判斷標準(bad大於半數) #####
+    #     bad_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM <= 0)
+    #     if times<10:
+    #         return bad_num >= 1
+    #     else: 
+    #         return bad_num >= np.ceil(self.target_num/2)
 
     def is_bad_trail(self, trial):
-        if self.key=="ASF":
-            return trial[0]>trial[1]
-        else: return False
+        if (trial==0).all(): return False
+        val = 0
+        for rule in self.config["rule"]:
+            p0 = trial[rule["idx"][0]]
+            p1 = trial[rule["idx"][1]]
+
+            for op in rule["op"]:
+                if op == '-': val = p0-p1
+                elif op == 'abs': val = np.abs(val)
+
+            if not (rule["between"][0]<=val and rule["between"][1]):
+                return False
+
+        return True
+
+    def round_nearest(self, num: float, step: float) -> float:
+        num, step = Decimal(str(num)), Decimal(str(step))
+        return float(round(num / step) * step)
 
     def generate_parameters(self, ind_idx, F, Cr):
         # select all pop except j
@@ -519,7 +534,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # denormalize to [min_b, max_b]
         trial_denorm = self.min_b + trial * self.diff
-        # trial_denorm = np.around(trial_denorm, 4)
+        trial_denorm = self.round_nearest(trial_denorm, self.config["step"])
+        trial = (trial_denorm-self.min_b)/self.diff
 
         return trial, trial_denorm
 
@@ -570,22 +586,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         root = tree.getroot()
 
         # 子節點與屬性
-        mod_aec_datas = root.findall(self.xml_node)
-
-        if self.key == "ASF":
-            param_value = np.concatenate([[p]*64 for p in param_value])
-
-        if self.key == "ABF":
-            param_value = np.concatenate([[p]*n for p,n in zip(param_value, [2,2,1])])
-            print('setParamToXML', param_value)
-
-        if self.key == "WNR":
-            param_value = np.concatenate([[p]*n for p,n in zip(param_value, [2,1,2,2])])
-            print('setParamToXML', param_value)
+        mod_aec_datas = root.findall(self.config["xml_node"])
+        # expand param
+        param_value = np.concatenate([[p]*n for p,n in zip(param_value, self.config["expand"])])
+        print('setParamToXML', param_value)
 
         for i, ele in enumerate(mod_aec_datas):
             if i==self.trigger_idx:
-                rgn_data = ele.find(self.data_node)
+                rgn_data = ele.find(self.config["data_node"])
                 dim = 0
                 for param_name in self.param_names:
                     parent = rgn_data.find(param_name+'_tab')

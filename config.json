@@ -22,6 +22,43 @@
                     2,
                     2
                 ]
+            ],
+            "expand": [
+                2,
+                1,
+                2,
+                2
+            ],
+            "step": 0.05,
+            "rule": [
+                {
+                    "idx": [
+                        0,
+                        1
+                    ],
+                    "op": [
+                        "-",
+                        "abs"
+                    ],
+                    "between": [
+                        0,
+                        0.2
+                    ]
+                },
+                {
+                    "idx": [
+                        2,
+                        3
+                    ],
+                    "op": [
+                        "-",
+                        "abs"
+                    ],
+                    "between": [
+                        0,
+                        0.2
+                    ]
+                }
             ]
         },
         "ASF": {
@@ -30,7 +67,8 @@
             "data_node": "asf32_rgn_data",
             "param_names": [
                 "layer_1_gain_positive_lut",
-                "layer_1_gain_negative_lut"
+                "layer_1_gain_negative_lut",
+                "layer_1_gain_weight_lut"
             ],
             "title": [
                 "layer_1_gain"
@@ -38,14 +76,37 @@
             "name": [
                 [
                     "positive_lut(64)",
-                    "negative_lut(64)"
+                    "negative_lut(64)",
+                    "layer_1_gain_weight_lut"
                 ]
             ],
             "col": [
                 [
                     1,
+                    1,
                     1
                 ]
+            ],
+            "expand": [
+                64,
+                64,
+                1
+            ],
+            "step": 0.05,
+            "rule": [
+                {
+                    "idx": [
+                        1,
+                        0
+                    ],
+                    "op": [
+                        "-"
+                    ],
+                    "between": [
+                        0.5,
+                        1e9
+                    ]
+                }
             ]
         },
         "ABF": {
@@ -73,7 +134,14 @@
                     1,
                     1
                 ]
-            ]
+            ],
+            "expand": [
+                2,
+                2,
+                1
+            ],
+            "step": 0.05,
+            "rule": []
         }
     }
 }

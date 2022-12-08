@@ -134,10 +134,14 @@ class ParamModifyBlock(QWidget):
                         return False
                 else:
                     param_change_idx.append(idx)
-                if P.lineEdits[i].text() == '':
-                    param_value.append(0)
+
+                if P.name[i] == "layer_1_gain_weight_lut":
+                    param_value.append(P.slider.s1.value())
                 else:
-                    param_value.append(float(P.lineEdits[i].text()))
+                    if P.lineEdits[i].text() == '':
+                        param_value.append(0)
+                    else:
+                        param_value.append(float(P.lineEdits[i].text()))
                 idx += 1
 
         self.data[self.root][self.key]['param_change_idx'] = param_change_idx

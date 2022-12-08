@@ -589,6 +589,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         mod_aec_datas = root.findall(self.config["xml_node"])
         # expand param
         param_value = np.concatenate([[p]*n for p,n in zip(param_value, self.config["expand"])])
+        if self.key=="ASF":
+            param_value = np.concatenate([param_value[:-1], self.curve_converter(np.arange(64), param_value[-1])])
         print('setParamToXML', param_value)
 
         for i, ele in enumerate(mod_aec_datas):
@@ -742,4 +744,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             secondSum += math.cos(2.0*math.pi*c)
         n = float(len(X))
         return -20.0*math.exp(-0.2*math.sqrt(firstSum/n)) - math.exp(secondSum/n) + 20 + math.e
+
+
+    def curve_converter(self, x, a):
+        return (1-np.exp(-(x/a)**3.96))*0.996
 

@@ -128,12 +128,12 @@ class PushAndSaveBlock(QWidget):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
         # param
+        self.tuning.config = config
+
         self.tuning.xml_path = self.data['xml_path']+config["file_path"]
-        self.tuning.xml_node = config["xml_node"]
         self.tuning.trigger_idx = self.data["trigger_idx"]
         self.tuning.param_names = config['param_names']
         self.tuning.key = self.data["page_key"]
-        self.tuning.data_node = config["data_node"]
 
         self.logger.signal.emit('set {} trigger_idx={} param to xml {}, '.format(self.data["page_key"], self.tuning.trigger_idx, config["file_path"]))
         self.tuning.setParamToXML(param_value)
@@ -154,12 +154,17 @@ class PushAndSaveBlock(QWidget):
         idx = 0
         for P in self.ui.parameter_setting_page.param_modify_block.param_modify_items:
             for i in range(len(P.checkBoxes)):
-                if P.lineEdits[i].text() == "":
-                    print(P.title, "未填入數字")
-                    return
+                if P.name[i] == "layer_1_gain_weight_lut":
+                        param_value.append(P.slider.s1.value())
                 else:
-                    param_value.append(float(P.lineEdits[i].text()))
+                    if P.lineEdits[i].text() == "":
+                        print(P.title, "未填入數字")
+                        return
+                        
+                    else:
+                        param_value.append(float(P.lineEdits[i].text()))
                 idx += 1
+                
         return param_value
 
     def btn_enable(self, b):

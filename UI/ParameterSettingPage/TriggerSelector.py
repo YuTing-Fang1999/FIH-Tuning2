@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QComboBox
 import xml.etree.ElementTree as ET
 import json
+from scipy.optimize import curve_fit
+from numpy import arange
 
 class TriggerSelector(QComboBox):
     def __init__(self, ui):
@@ -17,6 +19,7 @@ class TriggerSelector(QComboBox):
         self.parameter_setting_page = self.ui.parameter_setting_page
         self.data = self.ui.data
         self.config = self.ui.config
+        self.tuning = self.ui.tuning
         item_names = ["lux_idx from {} to {},  gain from {} to {}".format(d[0], d[1], d[2], d[3])for d in aec_trigger_datas]
         self.clear()
         self.addItems(item_names) # -> set_trigger_idx
@@ -56,7 +59,6 @@ class TriggerSelector(QComboBox):
                 for param_name in config['param_names']:
                     parent = rgn_data.find(param_name+'_tab')
                     if parent:
-                        print(parent.find(param_name).text)
                         param_value = parent.find(param_name).text.split(' ') 
                         param_value = [float(x) for x in param_value]
 
@@ -74,9 +76,14 @@ class TriggerSelector(QComboBox):
                     # ASF 暫定64取1
                     if param_name in ["layer_1_gain_positive_lut",
                                         "layer_1_gain_negative_lut",
-                                        "layer_1_gain_weight_lut"]:
+                                        ]:
                         param_value = [param_value[0]]
                         length = 1
+                    # ASF curve
+                    if param_name == "layer_1_gain_weight_lut":
+                        popt, pcov = curve_fit(self.tuning.curve_converter, arange(64), param_value)
+                        a = popt[0] 
+                        param_value = [a]
                     
                     # ABF 暫定2取1
                     if param_name in ["noise_prsv_lo",

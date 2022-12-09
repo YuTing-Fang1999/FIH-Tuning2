@@ -70,7 +70,7 @@ class CurveSlider(QWidget):
 
     def valuechange(self):
         #輸出當前地刻度值，利用刻度值來調節字體大小
-        print('current slider value=%s'%self.s1.value())
+        # print('current slider value=%s'%self.s1.value())
         x = np.arange(64)
         y = self.func(x, self.s1.value()/2)
         self.canvas_plot.update(y)

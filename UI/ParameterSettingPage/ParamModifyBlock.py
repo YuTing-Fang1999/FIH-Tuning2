@@ -115,10 +115,13 @@ class ParamModifyBlock(QWidget):
         print('update ParamModifyBlock UI')
         idx = 0
         for item in self.param_modify_items:
-            for lineEdit in item.lineEdits:
-                lineEdit.setText(str(param_value[idx]))
-                lineEdit.setCursorPosition(0)
-                idx += 1
+            for i in range(len(item.lineEdits)):
+                if item.name[i] == "layer_1_gain_weight_lut":
+                    item.slider.s1.setValue(int(param_value[idx]*2))
+                else:
+                    item.lineEdits[i].setText(str(param_value[idx]))
+                    item.lineEdits[i].setCursorPosition(0)
+                    idx += 1
 
     def set_data(self):
         print('set ParamModifyBlock data')

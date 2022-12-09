@@ -98,8 +98,11 @@ class ParameterSettingPage(QWidget):
         self.hyper_setting_block.update_UI()
         self.push_and_save_block.update_UI()
 
-        if "project_path" in self.data and os.path.exists(self.data["project_path"]):
-            self.set_project(self.data["project_path"])
+        if "project_path" in self.data:
+            if os.path.exists(self.data["project_path"]):
+                self.set_project(self.data["project_path"])
+            else:
+                self.logger.show_info(self.data["project_path"]+" not found")
 
     def setup_controller(self):
         pass

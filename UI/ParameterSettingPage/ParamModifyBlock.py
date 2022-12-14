@@ -121,7 +121,7 @@ class ParamModifyBlock(QWidget):
             for item in self.param_modify_items:
                 for i in range(len(item.col)):
                     for j in range(item.col[i]):
-                        if idx not in block_data['param_change_idx']:
+                        if idx in block_data['param_change_idx']:
                             item.checkBoxes[i][j].setChecked(True)
                         idx += 1
 

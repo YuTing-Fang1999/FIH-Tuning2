@@ -133,10 +133,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.popsize = self.data['population size']
         self.generations = self.data['generations']
         self.capture_num = self.data['capture num']
-        # self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.6, method="exponantial_reverse", rate = 0.03)
-        # self.F_optimiter = HyperOptimizer(init_value=1.2, final_value=0.7, method="exponantial", rate=0.5)
-        self.F_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
-        self.Cr_optimiter = HyperOptimizer(init_value=0.2, final_value=0.2, method="constant")
+        self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.8, method="exponantial_reverse", rate = 0.03)
+        self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=1, method="exponantial_reverse", rate=0.03)
+        # self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
+        # self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
         
         # params
         self.param_names = config['param_names']
@@ -188,6 +188,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.ML_update_count=0
         self.update_rate=0
         self.ML_update_rate=0
+
+        # 退火
+        self.T = 10
+        if self.TRAIN: self.T=10
 
         if len(self.data["target_type"])==0:
             self.alert_info_signal.emit("請先圈ROI", "請先圈ROI")
@@ -262,21 +266,22 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             now_IQM = self.measure_score_by_param_value('best/init_'+str(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
-            self.log_info_signal.emit('now IQM {}'.format(now_IQM))
-            self.log_info_signal.emit('now score {}'.format(self.fitness[ind_idx]))
+            # self.log_info_signal.emit('now IQM {}'.format(now_IQM))
+            # self.log_info_signal.emit('now score {}'.format(self.fitness[ind_idx]))
 
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, self.fitness[ind_idx], now_IQM)
 
             # 儲存xml
-            des="best/xml/init_{}.xml".format(ind_idx)
-            shutil.copyfile(self.xml_path, des)
-            # csv data
-            data = ["init_{}".format(ind_idx), 0]
-            for IQM in now_IQM: data.append(IQM)
-            data.append(trial_denorm)
-            self.csv_data.append(data)
-            print(self.csv_data)
+            if not self.TEST_MODE:
+                des="best/xml/init_{}.xml".format(ind_idx)
+                shutil.copyfile(self.xml_path, des)
+                # csv data
+                data = ["init_{}".format(ind_idx), 0]
+                for IQM in now_IQM: data.append(IQM)
+                data.append(trial_denorm)
+                self.csv_data.append(data)
+                print(self.csv_data)
 
 
         self.IQMs = np.array(self.IQMs)
@@ -286,7 +291,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # 依據標準差重新計算
         for ind_idx in range(self.popsize):
             self.fitness[ind_idx] = np.around(self.cal_score_by_weight(self.IQMs[ind_idx]), 5)
-            self.csv_data[ind_idx+2][1] = self.fitness[ind_idx]
+            if not self.TEST_MODE:
+                self.csv_data[ind_idx+2][1] = self.fitness[ind_idx]
 
             # 將圖片搬移到best資料夾
             # if not self.TEST_MODE:
@@ -326,9 +332,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # self.std_IQM = self.std_IQM = np.ones(self.target_num)
         print('std_IQM',self.std_IQM)
 
-        with open('best/init.csv', 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(self.csv_data)
+        if not self.TEST_MODE:
+            with open('best/init.csv', 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(self.csv_data)
 
         # shutil.rmtree("best/init")
 
@@ -352,17 +359,23 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.update_rate=self.update_count/self.popsize
         self.ML_update_rate=self.ML_update_count/self.popsize
 
-        with open('best/gen{}.csv'.format(gen_idx), 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(self.csv_data)
+        if not self.TEST_MODE:
+            with open('best/gen{}.csv'.format(gen_idx), 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(self.csv_data)
         
 
     def run_DE_for_a_individual(self, F, Cr, gen_idx, ind_idx, gen_dir):
         self.set_individual_signal.emit(str(ind_idx))
 
         trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
-        while(self.is_bad_trail(trial)):
+        
+        bad_time = 0
+        while(self.is_bad_trail(trial_denorm)):
             trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
+            bad_time+=1
+
+        # self.log_info_signal.emit("\nbad_time: {}\ntrial_denorm: {}\n".format(bad_time, trial_denorm))
 
         # update param_value
         self.param_value[self.param_change_idx] = trial_denorm
@@ -392,8 +405,8 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
         now_IQM = self.measure_score_by_param_value('best/gne{}_ind{}'.format(gen_idx, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
         f = np.around(self.cal_score_by_weight(now_IQM), 9)
-        self.log_info_signal.emit("now IQM {}".format(now_IQM))
-        self.log_info_signal.emit("now fitness {}".format(f))
+        # self.log_info_signal.emit("now IQM {}".format(now_IQM))
+        # self.log_info_signal.emit("now fitness {}".format(f))
 
         data = ['gne{}_ind{}'.format(gen_idx, ind_idx), f]
         for IQM in now_IQM: data.append(IQM)
@@ -455,8 +468,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             #     outfile.write(json.dumps(info, indent=4))
 
             # 儲存xml
-            des="best/xml/{}.xml".format(f)
-            shutil.copyfile(self.xml_path, des)
+            if not self.TEST_MODE:
+                des="best/xml/gne{}_ind{}.xml".format(gen_idx, ind_idx)
+                shutil.copyfile(self.xml_path, des)
 
             # 如果突變種比最優種更好
             if f < self.best_score:
@@ -488,6 +502,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             x = np.zeros(self.dimensions)
             x[self.param_change_idx] = trial - self.pop[ind_idx] # 參數差
             diff_target_IQM = self.target_IQM - self.IQMs[ind_idx] # 目標差
+            self.log_info_signal.emit(str(x))
             pred_dif_IQM = self.ML.predict(x)
 
             good_num = np.sum(pred_dif_IQM * self.weight_IQM * diff_target_IQM > 0)
@@ -498,7 +513,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                     break
 
             # trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
-            while(self.is_bad_trail(trial)):
+            while(self.is_bad_trail(trial_denorm)):
                 trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
 
         self.log_info_signal.emit("times: {}".format(times))  
@@ -516,19 +531,27 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     #     else: 
     #         return bad_num >= np.ceil(self.target_num/2)
 
-    def is_bad_trail(self, trial):
-        val = 0
+    def is_bad_trail(self, trial_denorm):
+        # return False
+        
         for rule in self.rule:
-            p0 = trial[rule["idx"][0]]
-            p1 = trial[rule["idx"][1]]
+            val = 0
+            p0 = trial_denorm[rule["idx"][0]]
+            p1 = trial_denorm[rule["idx"][1]]
 
             for op in rule["op"]:
                 if op == '-': val = p0-p1
                 elif op == 'abs': val = np.abs(val)
 
-            if not (rule["between"][0]<=val and rule["between"][1]):
-                return True
-
+            if not (rule["between"][0]<=val and val<=rule["between"][1]):
+                dif = rule["between"][1]-rule["between"][0]
+                p = math.exp((dif-val)/self.T) # 差越大p越小，越容易傳True
+                self.log_info_signal.emit("\n{} {}\n".format(dif-val, p))
+                if p<np.random.random(): 
+                    return True # p越小越容易比他大
+        
+        self.T *= 0.9
+        
         return False
 
     def round_nearest(self, x, base=0.05):
@@ -536,7 +559,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
     def generate_parameters(self, ind_idx, F, Cr):
         mutant = None
-        while mutant==None or (mutant[cross_points]==0).all():
+        times = 0
+        while times<20 and (not isinstance(mutant, np.ndarray) or ((trial_denorm-now_denorm)<=1e-5).all()):
+            
             # select all pop except j
             idxs = [idx for idx in range(self.popsize) if idx != ind_idx]
             # random select three pop except j
@@ -555,9 +580,15 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # random substitution mutation
             trial = np.where(cross_points, mutant, self.pop[ind_idx])
 
-        # denormalize to [min_b, max_b]
-        trial_denorm = self.min_b + trial * self.diff
-        trial_denorm = self.round_nearest(trial_denorm)
+            # denormalize to [min_b, max_b]
+            trial_denorm = self.min_b + trial * self.diff
+            trial_denorm = self.round_nearest(trial_denorm)
+
+            now_denorm = self.min_b + self.pop[ind_idx] * self.diff
+            now_denorm = self.round_nearest(now_denorm)
+
+            times+=1
+        self.log_info_signal.emit("times: {}".format(times))
         trial = (trial_denorm-self.min_b)/self.diff
 
         return trial, trial_denorm

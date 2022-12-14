@@ -42,7 +42,7 @@ class ML(QWidget):
 
         self.epoch_n=100
         self.train_idx = 1
-        self.pred_idx = 3
+        self.pred_idx = 2
 
         self.select_threshold = 0.3
         self.zero_threshold = 0.05

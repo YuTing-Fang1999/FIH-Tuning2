@@ -141,8 +141,8 @@ class Param_window(QMainWindow):
 
     
     def update(self, idx, trial_denorm, score, IQM):
-        # self.fitness[idx] = score
-        # self.label_score[idx].setText(str(np.round(score, 5)))
+        self.fitness[idx] = score
+        self.label_score[idx].setText(str(np.round(score, 5)))
         for j in range(self.param_change_num):
             self.label_trial_denorm[idx][j].setText(str(np.round(trial_denorm[j], 4)))
 

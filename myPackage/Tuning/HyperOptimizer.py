@@ -30,7 +30,7 @@ class HyperOptimizer():
             # self.final_value-=0.1
 
         v = (self.init_value-self.final_value) * \
-            np.exp(-self.rate * (generation % 15)) + self.final_value
+            np.exp(-self.rate * (generation % 40)) + self.final_value
 
         return v
 
@@ -39,7 +39,7 @@ class HyperOptimizer():
         #     self.init_value+=0.1
         #     self.rate-=0.01
 
-        v = self.init_value + (self.rate*(generation % 15))**np.exp(0.5)
+        v = self.init_value + (self.rate*(generation % 40))**np.exp(0.5)
         
         return min(v, self.final_value)
 

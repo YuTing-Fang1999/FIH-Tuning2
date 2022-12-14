@@ -8,6 +8,10 @@
                 "denoise_weight_y",
                 "denoise_weight_chroma"
             ],
+            "range_names": [
+                "denoise_weight_y",
+                "denoise_weight_chroma"
+            ],
             "title": [
                 "Denoise Weight"
             ],
@@ -70,6 +74,11 @@
                 "layer_1_gain_negative_lut",
                 "layer_1_gain_weight_lut"
             ],
+            "range_names": [
+                "layer_1_gain_positive_lut",
+                "layer_1_gain_negative_lut",
+                "layer_1_gain_weight_lut"
+            ],
             "title": [
                 "layer_1_gain"
             ],
@@ -118,26 +127,27 @@
                 "noise_prsv_hi",
                 "edge_softness"
             ],
+            "range_names": [
+                "noise_prsv_lo",
+                "edge_softness"
+            ],
             "title": [
                 "ABF"
             ],
             "name": [
                 [
-                    "noise_prsv_lo (2)",
-                    "noise_prsv_hi (2)",
+                    "noise_prsv_lo_hi (4)",
                     "edge_softness"
                 ]
             ],
             "col": [
                 [
                     1,
-                    1,
                     1
                 ]
             ],
             "expand": [
-                2,
-                2,
+                4,
                 1
             ],
             "step": 0.05,

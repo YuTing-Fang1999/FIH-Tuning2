@@ -100,7 +100,7 @@ class PushAndSaveBlock(QWidget):
         self.capture_worker = CaptureWorker(self.data, self.capture)
 
         self.btn_capture.clicked.connect(self.do_capture)
-        self.push_worker.capture_signal.connect(self.do_capture)
+        self.push_worker.capture_signal.connect(self.capture_worker.start)
         self.push_worker.set_btn_enable_signal.connect(self.btn_enable)
         self.capture_worker.set_btn_enable_signal.connect(self.btn_enable)
 
@@ -128,7 +128,11 @@ class PushAndSaveBlock(QWidget):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
         # param
-        self.tuning.config = config
+        # config
+        self.tuning.rule = config["rule"]
+        self.tuning.xml_node = config["xml_node"]
+        self.tuning.expand = config["expand"]
+        self.tuning.data_node = config["data_node"]
 
         self.tuning.xml_path = self.data['xml_path']+config["file_path"]
         self.tuning.trigger_idx = self.data["trigger_idx"]
@@ -152,19 +156,19 @@ class PushAndSaveBlock(QWidget):
 
         param_value = []
         idx = 0
-        for P in self.ui.parameter_setting_page.param_modify_block.param_modify_items:
-            for i in range(len(P.checkBoxes)):
-                if P.name[i] == "layer_1_gain_weight_lut":
-                        param_value.append(P.slider.s1.value())
+        for item in self.ui.parameter_setting_page.param_modify_block.param_modify_items:
+            for i in range(len(item.col)):
+                if item.name[i] == "layer_1_gain_weight_lut":
+                        param_value.append(item.slider.s1.value())
                 else:
-                    if P.lineEdits[i].text() == "":
-                        print(P.title, "未填入數字")
-                        return
-                        
-                    else:
-                        param_value.append(float(P.lineEdits[i].text()))
+                    for j in range(item.col[i]):
+                        if item.lineEdits[i][j].text() == "":
+                            print(item.title, "未填入數字")
+                            return
+                        else:
+                            param_value.append(float(item.lineEdits[i][j].text()))
                 idx += 1
-                
+
         return param_value
 
     def btn_enable(self, b):
@@ -172,7 +176,6 @@ class PushAndSaveBlock(QWidget):
         self.btn_capture.setEnabled(b)
         self.btn_push_phone.setEnabled(b)
         self.btn_recover_param.setEnabled(b)
-
 
     def do_capture(self):
         print("PushAndSaveBlock do_capture")

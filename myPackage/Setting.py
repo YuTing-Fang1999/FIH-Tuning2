@@ -23,16 +23,16 @@ class Setting(QWidget):
             self.alert_info_signal.emit("資料有誤或未填完", "「ROI設定」的資料未填完")
             return False
 
-        if self.ui.parameter_setting_page.param_modify_block.set_data() and alert:
-            self.alert_info_signal.emit("參數未填完", "有參數打勾卻未填入數字")
+        if not self.ui.parameter_setting_page.param_modify_block.set_data() and alert:
+            self.alert_info_signal.emit("參數未填完", "「參數設定」未填完\n有參數打勾卻未填入數字")
             return False
 
-        if self.ui.parameter_setting_page.param_range_block.set_data() and alert:
-            self.alert_info_signal.emit("參數未填完", "有參數未填入數字")
+        if not self.ui.parameter_setting_page.param_range_block.set_data() and alert:
+            self.alert_info_signal.emit("參數未填完", "「參數設定」未填完\n參數範圍未填完")
             return False
         
-        if self.ui.parameter_setting_page.hyper_setting_block.set_data() and alert:
-            self.alert_info_signal.emit("參數未填完", "超參數部分的參數未填完")
+        if not self.ui.parameter_setting_page.hyper_setting_block.set_data() and alert:
+            self.alert_info_signal.emit("參數未填完", "「參數設定」未填完\n超參數未填完")
             return False
 
         self.ui.run_page.upper_part.set_data()

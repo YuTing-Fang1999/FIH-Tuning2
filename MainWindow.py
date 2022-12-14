@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
         self.tuning.set_generation_signal.connect(self.run_page.upper_part.set_generation)
         self.tuning.set_individual_signal.connect(self.run_page.upper_part.set_individual)
         # tuning to param window
+        self.tuning.update_param_window_scores_signal.connect(self.update_param_window_scores)
         self.tuning.update_param_window_signal.connect(self.update_param_window)
         self.tuning.setup_param_window_signal.connect(self.setup_param_window)
         # tuning logger
@@ -134,6 +135,9 @@ class MainWindow(QMainWindow):
 
     def update_param_window(self, idx, param_value, score, IQM):
         self.param_window.update(idx, param_value, score, IQM)
+
+    def update_param_window_scores(self, scores):
+        self.param_window.update_scores(scores)
     ##### param_window #####
 
     def closeEvent(self, event):

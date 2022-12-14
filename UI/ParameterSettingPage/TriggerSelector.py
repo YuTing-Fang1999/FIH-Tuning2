@@ -56,7 +56,7 @@ class TriggerSelector(QComboBox):
         for i, ele in enumerate(node):
             if i==trigger_idx:
                 rgn_data = ele.find(config["data_node"])
-                for param_name in config['param_names']:
+                for param_name in config['range_names']:
                     parent = rgn_data.find(param_name+'_tab')
                     if parent:
                         param_value = parent.find(param_name).text.split(' ') 
@@ -66,6 +66,7 @@ class TriggerSelector(QComboBox):
                         length = int(parent.attrib['length'])
                         
                     else:
+                        print(param_name)
                         parent = rgn_data.find(param_name)
                         param_value = parent.text.split(' ') 
                         param_value = [float(x) for x in param_value]
@@ -104,7 +105,6 @@ class TriggerSelector(QComboBox):
 
         # converting 2d list into 1d
         block_data['param_value'] = sum(block_data['param_value'], [])
-        # print(block_data['param_value'])
 
         self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
         self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])

@@ -48,11 +48,12 @@ class HyperSettingBlock(QWidget):
 
     def set_data(self):
         print("set hyper param data")
-        not_fill=False
+        fill=True
         for i in range(len(self.hyper_param_name)):
             if self.lineEdits_hyper_setting[i].text()=="":
                 self.data[self.hyper_param_name[i]] = ""
-                not_fill = True
+                fill = False
             else:
                 self.data[self.hyper_param_name[i]] = int(self.lineEdits_hyper_setting[i].text())
-        return not_fill
+        return fill
+

@@ -95,10 +95,11 @@ class ParamRangeBlock(QWidget):
                 label.setText(str(defult_range[idx]))
                 idx += 1
         
-        if "coustom_range" not in self.data[self.root][self.key]:
+        if "coustom_range" not in self.data[self.root][self.key] or len(self.data[self.root][self.key]["coustom_range"])<len(defult_range):
             self.data[self.root][self.key]["coustom_range"] = defult_range
-
         coustom_range = self.data[self.root][self.key]["coustom_range"]
+        print(coustom_range)
+
         idx = 0
         for item in self.param_range_items:
             for lineEdit in item.lineEdits_range:
@@ -114,8 +115,7 @@ class ParamRangeBlock(QWidget):
         for item in self.param_range_items:
             for lineEdit in item.lineEdits_range:
                 if lineEdit.text() == "": 
-                    block_data["coustom_range"] = []
-                    break
+                    return False
                 block_data["coustom_range"].append(json.loads(lineEdit.text()))
         
         if len(block_data["coustom_range"]) > 0:
@@ -131,6 +131,8 @@ class ParamRangeBlock(QWidget):
                     block_data['bounds'] = np.concatenate([block_data['bounds'] , [block_data['coustom_range'][i]]*block_data['lengths'][i]])
 
             block_data['bounds']=block_data['bounds'].tolist()
+
+        return True
 
 if __name__ == "__main__":
     import sys

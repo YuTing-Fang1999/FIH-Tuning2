@@ -10,8 +10,10 @@ class GridModifyItem(QWidget):
 
     def __init__(self, title, name, col):
         super().__init__()
+
         self.title = title
         self.name = name
+        self.col = col
         self.checkBoxes_title = []
         self.checkBoxes = []
         self.lineEdits = []
@@ -32,13 +34,13 @@ class GridModifyItem(QWidget):
         VLayout.addLayout(title_wraper)
 
         idx = len(self.checkBoxes)
-        for i in range(sum(col)):
-            checkBox = QCheckBox()
-            checkBox.setToolTip("打勾代表將值固定")
-            self.checkBoxes.append(checkBox)
+        # for i in range(sum(col)):
+        #     checkBox = QCheckBox()
+        #     checkBox.setToolTip("打勾代表將值固定")
+        #     self.checkBoxes.append(checkBox)
 
-            lineEdit = QLineEdit()
-            self.lineEdits.append(lineEdit)
+        #     lineEdit = QLineEdit()
+        #     self.lineEdits.append(lineEdit)
 
         for i in range(len(col)):
 
@@ -49,14 +51,25 @@ class GridModifyItem(QWidget):
             label_name.setAlignment(QtCore.Qt.AlignRight)
             gridLayout.addWidget(label_name, i, 0)
 
+            self.checkBoxes.append([])
+            self.lineEdits.append([])
+
             for j in range(col[i]):
-                gridLayout.addWidget(self.checkBoxes[idx], i, 2+j*2)
+                checkBox = QCheckBox()
+                checkBox.setToolTip("打勾代表將值固定")
+
+                lineEdit = QLineEdit()
+
+                gridLayout.addWidget(checkBox, i, 2+j*2)
+
                 if name[i] == "layer_1_gain_weight_lut":
                     self.slider = CurveSlider()
                     gridLayout.addWidget(self.slider, i, 1+j*2)
                 else:
-                    gridLayout.addWidget(self.lineEdits[idx], i, 1+j*2)
-                idx += 1
+                    gridLayout.addWidget(lineEdit, i, 1+j*2)
+
+                self.checkBoxes[-1].append(checkBox)
+                self.lineEdits[-1].append(lineEdit)
             
 
         VLayout.addLayout(gridLayout)
@@ -65,8 +78,9 @@ class GridModifyItem(QWidget):
 
     def toggle_title_checkBoxes(self):
         checked = self.checkBoxes_title.isChecked()
-        for box in self.checkBoxes:
-            box.setChecked(checked)
+        for row_box in self.checkBoxes:
+            for col_box in row_box:
+                col_box.setChecked(checked)
 
 class ParamModifyBlock(QWidget):
     def __init__(self, ui):
@@ -104,24 +118,27 @@ class ParamModifyBlock(QWidget):
         block_data = self.data[root][key]
         if "param_change_idx" in block_data:
             idx = 0
-            for P in self.param_modify_items:
-                for i in range(len(P.checkBoxes)):
-                    if idx not in block_data['param_change_idx']:
-                        P.checkBoxes[i].setChecked(True)
-                    idx += 1
+            for item in self.param_modify_items:
+                for i in range(len(item.col)):
+                    for j in range(item.col[i]):
+                        if idx not in block_data['param_change_idx']:
+                            item.checkBoxes[i][j].setChecked(True)
+                        idx += 1
 
 
     def update_param_value_UI(self, param_value):
         print('update ParamModifyBlock UI')
         idx = 0
         for item in self.param_modify_items:
-            for i in range(len(item.lineEdits)):
+            for i in range(len(item.col)):
                 if item.name[i] == "layer_1_gain_weight_lut":
                     item.slider.s1.setValue(int(param_value[idx]*2))
+                    idx +=1
                 else:
-                    item.lineEdits[i].setText(str(param_value[idx]))
-                    item.lineEdits[i].setCursorPosition(0)
-                    idx += 1
+                    for j in range(item.col[i]):
+                        item.lineEdits[i][j].setText(str(param_value[idx]))
+                        item.lineEdits[i][j].setCursorPosition(0)
+                        idx += 1
 
     def set_data(self):
         print('set ParamModifyBlock data')
@@ -129,26 +146,30 @@ class ParamModifyBlock(QWidget):
         param_change_idx = []
         param_value = []
         idx = 0
-        for P in self.param_modify_items:
-            for i in range(len(P.checkBoxes)):
-                if P.checkBoxes[i].isChecked():
-                    if P.lineEdits[i].text() == "":
-                        print(P.title, "有參數打勾卻未填入數字")
-                        return False
+        for item in self.param_modify_items:
+            for i in range(len(item.col)):
+                if item.name[i] == "layer_1_gain_weight_lut":
+                    param_value.append(item.slider.s1.value())
+                    idx += 1
                 else:
-                    param_change_idx.append(idx)
+                    for j in range(item.col[i]):
+                        if item.checkBoxes[i][j].isChecked(): #代表要調
+                            param_change_idx.append(idx)
+                            param_value.append(0)
+                            
+                        else:
+                            if item.lineEdits[i][j].text() == "":
+                                print(item.title, "有參數沒打勾(代表固定)卻未填入數字")
+                                return False
+                            param_value.append(float(item.lineEdits[i][j].text()))
 
-                if P.name[i] == "layer_1_gain_weight_lut":
-                    param_value.append(P.slider.s1.value())
-                else:
-                    if P.lineEdits[i].text() == '':
-                        param_value.append(0)
-                    else:
-                        param_value.append(float(P.lineEdits[i].text()))
-                idx += 1
+                        idx += 1
 
         self.data[self.root][self.key]['param_change_idx'] = param_change_idx
         self.data[self.root][self.key]['param_value'] = param_value
+        print(param_value)
+
+        return True
 
 
     

@@ -31,7 +31,7 @@ class PushWorker(QThread):
     def run(self):
         self.set_btn_enable_signal.emit(False)
         self.tuning.buildAndPushToCamera(self.data["exe_path"], self.data["project_path"], self.data["bin_name"])
-        sleep(12)
+        sleep(7)
         # for i in range(12):
         #     print(i)
         #     sleep(1)
@@ -122,7 +122,7 @@ class PushAndSaveBlock(QWidget):
         self.data["saved_path"] = "{}/{}".format(dir_name, img_name)
 
     def set_to_xml(self):
-        param_value = self.get_param_value()
+        param_value = self.ui.parameter_setting_page.param_modify_block.get_param_value()
 
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
@@ -151,25 +151,7 @@ class PushAndSaveBlock(QWidget):
         self.set_to_xml()
         self.push_worker.start()
 
-    def get_param_value(self):
-        print('get ParamModifyBlock param_value')
-
-        param_value = []
-        idx = 0
-        for item in self.ui.parameter_setting_page.param_modify_block.param_modify_items:
-            for i in range(len(item.col)):
-                if item.name[i] == "layer_1_gain_weight_lut":
-                        param_value.append(item.slider.s1.value())
-                else:
-                    for j in range(item.col[i]):
-                        if item.lineEdits[i][j].text() == "":
-                            print(item.title, "未填入數字")
-                            return
-                        else:
-                            param_value.append(float(item.lineEdits[i][j].text()))
-                idx += 1
-
-        return param_value
+    
 
     def btn_enable(self, b):
         self.btn_set_to_xml.setEnabled(b)

@@ -149,20 +149,19 @@ class ParamModifyBlock(QWidget):
         for item in self.param_modify_items:
             for i in range(len(item.col)):
                 if item.name[i] == "layer_1_gain_weight_lut":
-                    param_value.append(item.slider.s1.value())
+                    param_value.append(item.slider.s1.value()/2)
                     idx += 1
                 else:
                     for j in range(item.col[i]):
                         if item.checkBoxes[i][j].isChecked(): #代表要調
                             param_change_idx.append(idx)
-                            param_value.append(0)
                             
-                        else:
-                            if item.lineEdits[i][j].text() == "":
+                        else: # 代表固定
+                            if item.lineEdits[i][j].text() == "": 
                                 print(item.title, "有參數沒打勾(代表固定)卻未填入數字")
                                 return False
-                            param_value.append(float(item.lineEdits[i][j].text()))
-
+                                
+                        param_value.append(float(item.lineEdits[i][j].text()))
                         idx += 1
 
         self.data[self.root][self.key]['param_change_idx'] = param_change_idx
@@ -170,6 +169,27 @@ class ParamModifyBlock(QWidget):
         print(param_value)
 
         return True
+
+
+    def get_param_value(self):
+        print('get ParamModifyBlock param_value')
+
+        param_value = []
+        idx = 0
+        for item in self.param_modify_items:
+            for i in range(len(item.col)):
+                if item.name[i] == "layer_1_gain_weight_lut":
+                        param_value.append(item.slider.s1.value()/2)
+                else:
+                    for j in range(item.col[i]):
+                        if item.lineEdits[i][j].text() == "":
+                            print(item.title, "未填入數字")
+                            return
+                        else:
+                            param_value.append(float(item.lineEdits[i][j].text()))
+                idx += 1
+
+        return param_value
 
 
     

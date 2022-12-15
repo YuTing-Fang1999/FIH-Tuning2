@@ -8,6 +8,7 @@ import json
 
 class Setting(QWidget):
     alert_info_signal = pyqtSignal(str, str)
+    
     def __init__(self, ui):
         super().__init__()
         self.ui = ui

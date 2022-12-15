@@ -85,6 +85,7 @@ class TriggerSelector(QComboBox):
                         popt, pcov = curve_fit(self.tuning.curve_converter, arange(64), param_value)
                         a = popt[0] 
                         param_value = [a]
+                        length = 1
                     
                     # ABF 暫定2取1
                     if param_name in ["noise_prsv_lo",

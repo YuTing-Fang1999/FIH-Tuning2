@@ -63,7 +63,7 @@ class CurveSlider(QWidget):
         Vlayout.addLayout(plot_wraprt)
 
         self.canvas_plot = MplCanvasPlot(self.label_plot)
-        self.canvas_plot.update(self.func(np.arange(64), self.s1.value()/2))
+        self.canvas_plot.update(self.func(np.arange(64), self.s1.value()))
 
     def func(self, x, a):
         return (1-np.exp(-(x/a)**3.96))*0.996

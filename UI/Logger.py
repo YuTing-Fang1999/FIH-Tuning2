@@ -69,7 +69,7 @@ class Logger(QWidget):
         :return: 子進程狀態碼和執行結果
         """
         # self.signal.emit('************** START **************')
-        self.signal.emit(cmd)
+        # self.signal.emit(cmd)
         try:
             p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except:

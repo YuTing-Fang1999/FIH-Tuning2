@@ -187,7 +187,7 @@ class ROI_SettingPage(QWidget):
                 cv2.putText(img_select, text=str(i+1), org=(x+w//2, y+h//2), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=min(w//50,h//50)+1, color=color, thickness=min(w//50,h//50)+1)
 
             self.label_img.setPhoto(img_select)
-            self.ROI_select_window.my_viewer.set_img(img_select)
+            # self.ROI_select_window.my_viewer.set_img(img_select)
         else: self.data["roi"] = []
 
     def load_target_img(self):

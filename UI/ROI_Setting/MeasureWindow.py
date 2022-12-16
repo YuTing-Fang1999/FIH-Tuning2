@@ -66,10 +66,14 @@ class MeasureWindow(QWidget):
         self.VLayout.setContentsMargins(50, 50, 50, 50)
 
         HLayout = QHBoxLayout()
-        self.block = Block(self.type_name, self.tip)
-        HLayout.addWidget(self.block)
+        self.my_block = Block(self.type_name, self.tip)
+        self.target_block = Block(self.type_name, self.tip)
+        HLayout.addWidget(self.my_block)
+        HLayout.addWidget(self.target_block)
         self.VLayout.addLayout(HLayout)
 
+        for i in range(len(self.type_name)):
+            self.my_block.score_block.check_box[i].hide()
         
         self.btn_OK = QPushButton("OK")
         self.VLayout.addWidget(self.btn_OK)
@@ -81,16 +85,21 @@ class MeasureWindow(QWidget):
             "QPushButton{font-size:12pt; font-family:微軟正黑體; background-color:rgb(255, 170, 0);}"
         )
 
-    def measure_target(self, my_x_y_w_h, target_roi_img):
+    def measure_target(self, my_x_y_w_h, my_roi_img, target_roi_img):
         self.my_x_y_w_h = my_x_y_w_h
-        self.block.img_block.setPhoto(target_roi_img)
+        self.my_block.img_block.setPhoto(my_roi_img)
+        self.target_block.img_block.setPhoto(target_roi_img)
 
         self.score_value = []
         for i in range(len(self.type_name)):
             v = self.calFunc[self.type_name[i]](target_roi_img)
             v = np.around(v, 5)
-            self.block.score_block.label_score[i].setText(str(v))
+            self.target_block.score_block.label_score[i].setText(str(v))
             self.score_value.append(v)
+
+            v = self.calFunc[self.type_name[i]](my_roi_img)
+            v = np.around(v, 5)
+            self.my_block.score_block.label_score[i].setText(str(v))
 
         self.showMaximized()
 
@@ -98,7 +107,7 @@ class MeasureWindow(QWidget):
         target_type = []
         score_value = []
         for i in range(len(self.type_name)):
-            if self.block.score_block.check_box[i].isChecked():
+            if self.target_block.score_block.check_box[i].isChecked():
                 target_type.append(self.type_name[i])
                 score_value.append(self.score_value[i])
 

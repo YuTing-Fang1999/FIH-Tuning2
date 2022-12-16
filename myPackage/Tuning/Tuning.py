@@ -136,7 +136,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.capture_num = self.data['capture num']
         # self.Cr_optimiter = HyperOptimizer(init_value=0.3, final_value=0.8, method="exponantial_reverse", rate = 0.03)
         # self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=1, method="exponantial_reverse", rate=0.03)
-        self.F_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
+        self.F_optimiter = HyperOptimizer(init_value=0.7, final_value=0.7, method="constant")
         self.Cr_optimiter = HyperOptimizer(init_value=0.5, final_value=0.5, method="constant")
         
         # params
@@ -555,7 +555,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if not (rule["between"][0]<=val and val<=rule["between"][1]):
                 dif = rule["between"][1]-rule["between"][0]
                 p = math.exp((dif-val)/self.T) # 差越大p越小，越容易傳True
-                self.log_info_signal.emit("\n{} {}\n".format(dif-val, p))
+                self.log_info_signal.emit("{} {}".format(dif-val, p))
                 if p<np.random.random(): 
                     return True # p越小越容易比他大
         
@@ -599,7 +599,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             times+=1
             if times>20: return True, [], []
 
-        self.log_info_signal.emit("times: {}".format(times))
+        self.log_info_signal.emit("generate_times: {}".format(times))
         trial = (trial_denorm-self.min_b)/self.diff
 
         return False, trial, trial_denorm

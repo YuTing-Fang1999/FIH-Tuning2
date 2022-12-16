@@ -119,6 +119,7 @@ class UpperPart(QWidget):
 
     def start(self):
         if not self.setting.set_data(): return
+        self.ui.logger.clear_info()
         self.ui.logger.signal.emit("START")
 
         self.tuning.is_run = True

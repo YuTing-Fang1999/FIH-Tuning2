@@ -41,6 +41,9 @@ class Logger(QWidget):
         # if self.run_cmd("adb")!=0:
         #     self.signal.emit("可能是沒安裝adb，請先安裝adb")
 
+    def clear_info(self):
+        self.info.setText("")
+        
     def show_info(self, info):
         pre_text=self.info.text()
         print(info)

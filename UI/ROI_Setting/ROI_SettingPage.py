@@ -136,8 +136,8 @@ class ROI_SettingPage(QWidget):
         self.btn_add_ROI_item.clicked.connect(self.add_ROI_item_click)
         self.btn_load_target_pic.clicked.connect(self.load_target_img)
         
-    def select_ROI(self, my_x_y_w_h, target_roi_img):
-        self.measure_window.measure_target(my_x_y_w_h, target_roi_img)
+    def select_ROI(self, my_x_y_w_h, my_roi_img, target_roi_img):
+        self.measure_window.measure_target(my_x_y_w_h, my_roi_img, target_roi_img)
 
     def set_target_score(self, my_x_y_w_h, target_type, target_score):
         

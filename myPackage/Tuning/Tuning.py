@@ -378,9 +378,11 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         if(is_return): return
         
         bad_time = 0
-        while(self.is_bad_trail(trial_denorm)):
+        while(self.is_bad_trial(trial_denorm)):
             is_return, trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
-            if(is_return): return
+            if(is_return or bad_time>20): 
+                self.log_info_signal.emit("\nreturn because good trial not found\n")
+                return
             bad_time+=1
 
         self.log_info_signal.emit("\nbad_time: {} trial_denorm: {}\n".format(bad_time, trial_denorm))
@@ -521,7 +523,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                     break
 
             # trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
-            while(self.is_bad_trail(trial_denorm)):
+            while(self.is_bad_trial(trial_denorm)):
                 is_return, trial, trial_denorm = self.generate_parameters(ind_idx, F, Cr)
                 if(is_return): break
 
@@ -540,7 +542,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     #     else: 
     #         return bad_num >= np.ceil(self.target_num/2)
 
-    def is_bad_trail(self, trial_denorm):
+    def is_bad_trial(self, trial_denorm):
         # return False
         
         for rule in self.rule:
@@ -559,7 +561,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 if p<np.random.random(): 
                     return True # p越小越容易比他大
         
-        self.T *= 0.9
+        self.T *= 0.8
         
         return False
 

@@ -448,7 +448,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # 如果突變種比原本的更好
         if f < self.fitness[ind_idx]:
-            self.best_csv_data[ind_idx] = data
+            self.best_csv_data[ind_idx+2] = data
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, f, now_IQM)
             
@@ -468,13 +468,13 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 for i in range(self.capture_num):
                     if self.capture_num==1:
                         src_img = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
-                        des_img = '{}.jpg'.format(f) # 根據量化分數命名
+                        des_img = '{}.jpg'.format(ind_idx) # 根據量化分數命名
                         
                     else:
                         src_img = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
-                        des_img = '{}_{}.jpg'.format(f, i) # 根據量化分數命名
+                        des_img = '{}_{}.jpg'.format(ind_idx, i) # 根據量化分數命名
 
-                    src='best/{}'.format(gen_dir, src_img)
+                    src='best/{}'.format(src_img)
                     des='best_photo/{}'.format(des_img) # 根據量化分數命名
 
                     if os.path.exists(des): os.remove(des)

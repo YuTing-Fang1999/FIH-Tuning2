@@ -27,6 +27,7 @@ class PushWorker(QThread):
         super().__init__()
         self.data = data
         self.tuning = tuning
+        self.is_capture = False
 
     def run(self):
         self.set_btn_enable_signal.emit(False)
@@ -35,7 +36,10 @@ class PushWorker(QThread):
         # for i in range(12):
         #     print(i)
         #     sleep(1)
-        self.capture_signal.emit()
+        if self.is_capture:
+            self.capture_signal.emit()
+        else:
+            self.set_btn_enable_signal.emit(True)
 
 class PushAndSaveBlock(QWidget):
     alert_info_signal = pyqtSignal(str, str)
@@ -76,11 +80,14 @@ class PushAndSaveBlock(QWidget):
         self.btn_set_to_xml = QPushButton("寫入XML")
         VLayout.addWidget(self.btn_set_to_xml)
 
-        self.btn_push_phone = QPushButton("推到手機 + 拍照")
+        self.btn_push_phone = QPushButton("推到手機")
         VLayout.addWidget(self.btn_push_phone)
 
         self.btn_capture = QPushButton("拍照")
         VLayout.addWidget(self.btn_capture)
+
+        self.btn_push_phone_capture = QPushButton("推到手機 + 拍照")
+        VLayout.addWidget(self.btn_push_phone_capture)
 
         self.btn_recover_param = QPushButton("參數復原")
         VLayout.addWidget(self.btn_recover_param)
@@ -107,7 +114,8 @@ class PushAndSaveBlock(QWidget):
 
     def setup_controller(self):
         self.btn_set_to_xml.clicked.connect(self.set_to_xml)
-        self.btn_push_phone.clicked.connect(self.push_phone)
+        self.btn_push_phone.clicked.connect(lambda: self.push_phone(is_capture=False))
+        self.btn_push_phone_capture.clicked.connect(lambda: self.push_phone(is_capture=True))
         self.btn_recover_param.clicked.connect(self.recover_param)
 
     def set_data(self):
@@ -145,13 +153,15 @@ class PushAndSaveBlock(QWidget):
         self.logger.signal.emit('set {} trigger_idx={} param to xml {}, '.format(self.data["page_key"], self.tuning.trigger_idx, config["file_path"]))
         self.tuning.setParamToXML(param_value)
 
-    def push_phone(self):
-        self.set_data()
-        path = self.data["saved_path"]
-        if os.path.exists(path+".jpg"):
-            self.alert_info_signal.emit("檔名重複", "檔名\n"+path+".jpg\n已存在，請重新命名")
-            return
+    def push_phone(self, is_capture):
+        if is_capture:
+            self.set_data()
+            path = self.data["saved_path"]
+            if os.path.exists(path+".jpg"):
+                self.alert_info_signal.emit("檔名重複", "檔名\n"+path+".jpg\n已存在，請重新命名")
+                return
         self.set_to_xml()
+        self.push_worker.is_capture = is_capture
         self.push_worker.start()
 
     
@@ -160,6 +170,7 @@ class PushAndSaveBlock(QWidget):
         self.btn_set_to_xml.setEnabled(b)
         self.btn_capture.setEnabled(b)
         self.btn_push_phone.setEnabled(b)
+        self.btn_push_phone_capture.setEnabled(b)
         self.btn_recover_param.setEnabled(b)
 
     def do_capture(self):

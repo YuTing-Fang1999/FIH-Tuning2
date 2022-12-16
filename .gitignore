@@ -4,6 +4,7 @@ initial
 ans
 generation*
 best
+best_photo
 target
 *.bin
 *.pptx

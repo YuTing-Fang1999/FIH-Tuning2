@@ -36,6 +36,8 @@ class Setting(QWidget):
             self.alert_info_signal.emit("參數未填完", "「參數設定」未填完\n超參數未填完")
             return False
 
+        self.ui.parameter_setting_page.trigger_selector.set_data()
+
         self.ui.run_page.upper_part.set_data()
 
         return True

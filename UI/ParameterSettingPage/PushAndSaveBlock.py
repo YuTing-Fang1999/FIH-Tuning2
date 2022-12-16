@@ -86,6 +86,7 @@ class PushAndSaveBlock(QWidget):
         VLayout.addWidget(self.btn_recover_param)
 
     def update_UI(self):
+        self.trigger_selector = self.ui.parameter_setting_page.trigger_selector
         self.data = self.ui.data
         self.config = self.ui.config
         self.tuning = self.ui.tuning
@@ -110,6 +111,8 @@ class PushAndSaveBlock(QWidget):
         self.btn_recover_param.clicked.connect(self.recover_param)
 
     def set_data(self):
+        self.trigger_selector.set_data()
+        
         self.data['saved_dir_name'] = self.lineEdits_dir_name.text()
         self.data['saved_img_name'] = self.lineEdits_img_name.text()
 

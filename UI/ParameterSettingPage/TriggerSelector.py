@@ -22,10 +22,15 @@ class TriggerSelector(QComboBox):
         self.tuning = self.ui.tuning
         item_names = ["lux_idx from {} to {},  gain from {} to {}".format(d[0], d[1], d[2], d[3])for d in aec_trigger_datas]
         self.clear()
-        self.addItems(item_names) # -> set_trigger_idx
+        self.addItems(item_names) # -> set_trigger_idx 0
+        self.setCurrentIndex(self.data["trigger_idx"])
 
     def setup_controller(self):
         self.currentIndexChanged[int].connect(self.set_trigger_idx)
+
+    def set_data(self):
+        self.data["trigger_idx"] = self.currentIndex()
+        self.data["trigger_name"] = self.currentText()
 
     def set_trigger_idx(self, trigger_idx, xml_path=''):
         if trigger_idx==-1:
@@ -36,8 +41,8 @@ class TriggerSelector(QComboBox):
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
 
-        self.data["trigger_idx"] = trigger_idx
-        self.data["trigger_name"] = self.currentText()
+        # self.data["trigger_idx"] = trigger_idx
+        # self.data["trigger_name"] = self.currentText()
 
         if xml_path=='' and 'xml_path' in self.data: xml_path=self.data['xml_path']+config["file_path"]
         if xml_path=='': return

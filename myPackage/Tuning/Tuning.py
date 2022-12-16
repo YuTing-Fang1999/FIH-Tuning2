@@ -216,12 +216,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         for t in self.target_type: title.append(t)
         title.append(self.param_names)
         self.csv_data = [title]
+        self.best_csv_data = [title]
 
         # csv target
         data = ["target", 0]
         for IQM in self.target_IQM: data.append(IQM)
         title.append("")
         self.csv_data.append(data)
+        self.best_csv_data.append(data)
 
         ##### start tuning #####
         # setup
@@ -253,8 +255,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
     def initial_individual(self):
         # 刪除資料夾
         if os.path.exists('best'): shutil.rmtree('best')
+        if os.path.exists('best_photo'): shutil.rmtree('best_photo')
         self.mkdir('best')
         self.mkdir('best/xml')
+        self.mkdir('best_photo')
+
+        
         # self.mkdir('best/img')
         # self.mkdir('best/init')
         self.set_generation_signal.emit("initialize")
@@ -279,15 +285,17 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, self.fitness[ind_idx], now_IQM)
 
-            # 儲存xml
+            
             if not self.TEST_MODE:
-                des="best/xml/init_ind{}.xml".format(ind_idx)
-                shutil.copyfile(self.xml_path, des)
+                # 儲存xml
+            #     des="best/xml/init_ind{}.xml".format(ind_idx)
+            #     shutil.copyfile(self.xml_path, des)
                 # csv data
                 data = ["init_ind{}".format(ind_idx), 0]
                 for IQM in now_IQM: data.append(IQM)
                 data.append(trial_denorm)
                 self.csv_data.append(data)
+                self.best_csv_data.append(data)
 
 
         self.IQMs = np.array(self.IQMs)
@@ -299,23 +307,24 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.fitness[ind_idx] = np.around(self.cal_score_by_weight(self.IQMs[ind_idx]), 5)
             if not self.TEST_MODE:
                 self.csv_data[ind_idx+2][1] = self.fitness[ind_idx]
+                self.best_csv_data[ind_idx+2][1] = self.fitness[ind_idx]
 
             # 將圖片搬移到best資料夾
-            # if not self.TEST_MODE:
-            #     for i in range(self.capture_num):
-            #         if self.capture_num==1:
-            #             src_img = 'init_{}.jpg'.format(ind_idx)
-            #             des_img = 'init_{}.jpg'.format(ind_idx) 
+            if not self.TEST_MODE:
+                for i in range(self.capture_num):
+                    if self.capture_num==1:
+                        src_img = 'init_ind{}.jpg'.format(ind_idx)
+                        des_img = '{}.jpg'.format(ind_idx) 
                         
-            #         else:
-            #             src_img = 'init_{}_{}.jpg'.format(ind_idx, i)
-            #             des_img = 'init_{}_{}.jpg'.format(ind_idx, i) 
+                    else:
+                        src_img = 'init_ind{}_{}.jpg'.format(ind_idx, i)
+                        des_img = '{}_{}.jpg'.format(ind_idx, i) 
 
-            #         src='best/init/{}'.format(src_img)
-            #         des='best/{}'.format(des_img) 
+                    src='best/{}'.format(src_img)
+                    des='best_photo/{}'.format(des_img) 
 
-            #         if os.path.exists(des): os.remove(des)
-            #         os.replace(src, des)
+                    if os.path.exists(des): os.remove(des)
+                    os.replace(src, des)
 
             # 儲存json
             # info = {
@@ -342,6 +351,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             with open('best/init.csv', 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(self.csv_data)
+            with open('best_photo/init.csv', 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(self.best_csv_data)
 
         # shutil.rmtree("best/init")
 
@@ -369,6 +381,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             with open('best/gen{}.csv'.format(gen_idx), 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(self.csv_data)
+
+            with open('best_photo/gen{}.csv'.format(gen_idx), 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(self.best_csv_data)
         
 
     def run_DE_for_a_individual(self, F, Cr, gen_idx, ind_idx, gen_dir):
@@ -432,6 +448,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # 如果突變種比原本的更好
         if f < self.fitness[ind_idx]:
+            self.best_csv_data[ind_idx] = data
             # update_param_window
             self.update_param_window_signal.emit(ind_idx, trial_denorm, f, now_IQM)
             
@@ -446,22 +463,22 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.IQMs[ind_idx] = now_IQM
             self.pop[ind_idx] = trial
 
-            # # 將圖片搬移到best資料夾
-            # if not self.TEST_MODE:
-            #     for i in range(self.capture_num):
-            #         if self.capture_num==1:
-            #             src_img = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
-            #             des_img = '{}.jpg'.format(f) # 根據量化分數命名
+            # 將圖片搬移到best資料夾
+            if not self.TEST_MODE:
+                for i in range(self.capture_num):
+                    if self.capture_num==1:
+                        src_img = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
+                        des_img = '{}.jpg'.format(f) # 根據量化分數命名
                         
-            #         else:
-            #             src_img = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
-            #             des_img = '{}_{}.jpg'.format(f, i) # 根據量化分數命名
+                    else:
+                        src_img = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
+                        des_img = '{}_{}.jpg'.format(f, i) # 根據量化分數命名
 
-            #         src='{}/{}'.format(gen_dir, src_img)
-            #         des='best/{}'.format(des_img) # 根據量化分數命名
+                    src='best/{}'.format(gen_dir, src_img)
+                    des='best_photo/{}'.format(des_img) # 根據量化分數命名
 
-            #         if os.path.exists(des): os.remove(des)
-            #         os.replace(src,des)
+                    if os.path.exists(des): os.remove(des)
+                    os.replace(src,des)
             # # 儲存json
             # info = {
             #     "target_type": self.target_type.tolist(),
@@ -478,9 +495,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             #     outfile.write(json.dumps(info, indent=4))
 
             # 儲存xml
-            if not self.TEST_MODE:
-                des="best/xml/gne{}_ind{}.xml".format(gen_idx, ind_idx)
-                shutil.copyfile(self.xml_path, des)
+            # if not self.TEST_MODE:
+            #     des="best/xml/gne{}_ind{}.xml".format(gen_idx, ind_idx)
+            #     shutil.copyfile(self.xml_path, des)
 
             # 如果突變種比最優種更好
             if f < self.best_score:
@@ -555,8 +572,9 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 elif op == 'abs': val = np.abs(val)
 
             if not (rule["between"][0]<=val and val<=rule["between"][1]):
-                dif = rule["between"][1]-rule["between"][0]
-                p = math.exp((dif-val)/self.T) # 差越大p越小，越容易傳True
+                if val>rule["between"][1]: dif = -(val-rule["between"][1])
+                if val<rule["between"][0]: dif = (val-rule["between"][0])
+                p = math.exp(dif/self.T) # 差越大p越小，越容易傳True
                 self.log_info_signal.emit("{} {}".format(dif-val, p))
                 if p<np.random.random(): 
                     return True # p越小越容易比他大

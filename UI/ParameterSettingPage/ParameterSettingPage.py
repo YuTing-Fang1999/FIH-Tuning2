@@ -175,6 +175,7 @@ class ParameterSettingPage(QWidget):
         self.param_modify_block.update_UI(self.data["page_root"],self.data["page_key"])
         self.param_range_block.update_UI(self.data["page_root"],self.data["page_key"])
         self.trigger_selector.update_UI(aec_trigger_datas)
+        
         self.logger.show_info("Load {} Successfully".format(self.data["project_name"]))
 
 

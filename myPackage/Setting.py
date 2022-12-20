@@ -51,7 +51,8 @@ class Setting(QWidget):
             print("找不到設定檔，重新生成一個新的設定檔")
             self.data = {
                 "page_root": "OPE",
-                "page_key": "WNR"
+                "page_key": "WNR",
+                "trigger_idx": 0
             }
 
     def write_setting(self):

@@ -254,15 +254,15 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
     def initial_individual(self):
         # 刪除資料夾
-        if os.path.exists('best'): shutil.rmtree('best')
+        if os.path.exists('log'): shutil.rmtree('log')
         if os.path.exists('best_photo'): shutil.rmtree('best_photo')
-        self.mkdir('best')
-        self.mkdir('best/xml')
+        self.mkdir('log')
+        # self.mkdir('log/xml')
         self.mkdir('best_photo')
 
         
-        # self.mkdir('best/img')
-        # self.mkdir('best/init')
+        # self.mkdir('log/img')
+        # self.mkdir('log/init')
         self.set_generation_signal.emit("initialize")
 
         # initial individual
@@ -276,7 +276,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.param_value[self.param_change_idx] = trial_denorm
             # self.log_info_signal.emit("self.param_value: {}".format(self.param_change_idx))
             # measure score
-            now_IQM = self.measure_score_by_param_value('best/init_ind'+str(ind_idx), self.param_value, train=False)
+            now_IQM = self.measure_score_by_param_value('log/ind{}_init'.format(ind_idx), self.param_value, train=False)
             self.fitness.append(np.around(self.cal_score_by_weight(now_IQM), 9))
             self.IQMs.append(now_IQM)
             # self.log_info_signal.emit('now IQM {}'.format(now_IQM))
@@ -288,10 +288,10 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             
             if not self.TEST_MODE:
                 # 儲存xml
-            #     des="best/xml/init_ind{}.xml".format(ind_idx)
+            #     des="log/xml/init_ind{}.xml".format(ind_idx)
             #     shutil.copyfile(self.xml_path, des)
                 # csv data
-                data = ["init_ind{}".format(ind_idx), 0]
+                data = ["ind{}_init".format(ind_idx), 0]
                 for IQM in now_IQM: data.append(IQM)
                 data.append(trial_denorm)
                 self.csv_data.append(data)
@@ -313,18 +313,18 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if not self.TEST_MODE:
                 for i in range(self.capture_num):
                     if self.capture_num==1:
-                        src_img = 'init_ind{}.jpg'.format(ind_idx)
+                        src_img = 'ind{}_init.jpg'.format(ind_idx)
                         des_img = '{}.jpg'.format(ind_idx) 
                         
                     else:
-                        src_img = 'init_ind{}_{}.jpg'.format(ind_idx, i)
+                        src_img = 'ind{}_{}_init.jpg'.format(ind_idx, i)
                         des_img = '{}_{}.jpg'.format(ind_idx, i) 
 
-                    src='best/{}'.format(src_img)
+                    src='log/{}'.format(src_img)
                     des='best_photo/{}'.format(des_img) 
 
                     if os.path.exists(des): os.remove(des)
-                    os.replace(src, des)
+                    shutil.copyfile(src, des)
 
             # 儲存json
             # info = {
@@ -335,7 +335,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             #     "param_block": self.key,
             #     "trigger_block": self.trigger_name,
             # }
-            # with open('best/{}.json'.format(self.fitness[ind_idx]), "w") as outfile:
+            # with open('log/{}.json'.format(self.fitness[ind_idx]), "w") as outfile:
             #     outfile.write(json.dumps(info, indent=4))
 
             if self.fitness[ind_idx] < self.best_score:
@@ -348,14 +348,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         print('std_IQM',self.std_IQM)
 
         if not self.TEST_MODE:
-            with open('best/init.csv', 'w', newline='') as file:
+            with open('log/init.csv', 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(self.csv_data)
             with open('best_photo/init.csv', 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(self.best_csv_data)
 
-        # shutil.rmtree("best/init")
+        # shutil.rmtree("log/init")
 
     def run_DE_for_a_generation(self, gen_idx):
         self.set_generation_signal.emit(str(gen_idx))
@@ -378,7 +378,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.ML_update_rate=self.ML_update_count/self.popsize
 
         if not self.TEST_MODE:
-            with open('best/gen{}.csv'.format(gen_idx), 'w', newline='') as file:
+            with open('log/gen{}.csv'.format(gen_idx), 'w', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerows(self.csv_data)
 
@@ -409,7 +409,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         if self.TEST_MODE:
             # mesure score
             # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
-            now_IQM = self.measure_score_by_param_value('{}/{}'.format(gen_dir, ind_idx), self.param_value, train=False)
+            now_IQM = self.measure_score_by_param_value('log/ind{}_gne{}'.format(ind_idx, gen_idx), self.param_value, train=False)
             f = np.around(self.cal_score_by_weight(now_IQM), 9)
             # self.log_info_signal.emit("now IQM {}".format(now_IQM))
             # self.log_info_signal.emit("now fitness {}".format(f))
@@ -429,12 +429,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
         # mesure score
         # self.log_info_signal.emit("generations:{}, individual:{}".format(gen_idx, ind_idx))
-        now_IQM = self.measure_score_by_param_value('best/gne{}_ind{}'.format(gen_idx, ind_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
+        now_IQM = self.measure_score_by_param_value('log/ind{}_gne{}'.format(ind_idx, gen_idx), self.param_value, train=gen_idx>=self.ML.train_idx)
         f = np.around(self.cal_score_by_weight(now_IQM), 9)
         # self.log_info_signal.emit("now IQM {}".format(now_IQM))
         # self.log_info_signal.emit("now fitness {}".format(f))
 
-        data = ['gne{}_ind{}'.format(gen_idx, ind_idx), f]
+        data = ['ind{}_gne{}'.format(ind_idx, gen_idx), f]
         for IQM in now_IQM: data.append(IQM)
         data.append(trial_denorm)
         self.csv_data.append(data)
@@ -467,18 +467,18 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if not self.TEST_MODE:
                 for i in range(self.capture_num):
                     if self.capture_num==1:
-                        src_img = 'gne{}_ind{}.jpg'.format(gen_idx ,ind_idx)
+                        src_img = 'ind{}_gne{}'.format(ind_idx, gen_idx)
                         des_img = '{}.jpg'.format(ind_idx) # 根據量化分數命名
                         
                     else:
-                        src_img = 'gne{}_ind{}_{}.jpg'.format(gen_idx, ind_idx, i)
+                        src_img = 'ind{}_{}_gne{}'.format(ind_idx, i, gen_idx)
                         des_img = '{}_{}.jpg'.format(ind_idx, i) # 根據量化分數命名
 
-                    src='best/{}'.format(src_img)
+                    src='log/{}'.format(src_img)
                     des='best_photo/{}'.format(des_img) # 根據量化分數命名
 
                     if os.path.exists(des): os.remove(des)
-                    os.replace(src,des)
+                    shutil.copyfile(src, des)
             # # 儲存json
             # info = {
             #     "target_type": self.target_type.tolist(),
@@ -491,12 +491,12 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             #     "param_name": self.param_names,
             #     "param_value": self.param_value.tolist(),
             # }
-            # with open('best/{}.json'.format(f), "w") as outfile:
+            # with open('log/{}.json'.format(f), "w") as outfile:
             #     outfile.write(json.dumps(info, indent=4))
 
             # 儲存xml
             # if not self.TEST_MODE:
-            #     des="best/xml/gne{}_ind{}.xml".format(gen_idx, ind_idx)
+            #     des="log/xml/gne{}_ind{}.xml".format(gen_idx, ind_idx)
             #     shutil.copyfile(self.xml_path, des)
 
             # 如果突變種比最優種更好
@@ -626,14 +626,14 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
 
     def update_best_score(self, idx, score):
-        # update best score
+        # update log score
         self.best_score = np.round(score, 9)
-        # print('replace with best score')
+        # print('replace with log score')
         # print('now best_idx', idx, 'now best_score', score)
-        # update best score to UI
+        # update log score to UI
         # self.ui.statusbar.showMessage('individual {} get the better score'.format(idx), 3000)
         self.set_score_signal.emit(str(self.best_score))
-        # update best param to UI
+        # update log param to UI
         # self.update_param_window_signal.emit(idx, pop_denorm[idx], fitness[idx], now_IQM)
         
 

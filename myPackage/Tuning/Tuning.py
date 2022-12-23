@@ -839,5 +839,6 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
 
     def curve_converter(self, x, a):
+        if (a==0).all(): return [0.996]*len(x)
         return (1-np.exp(-(x/a)**3.96))*0.996
 

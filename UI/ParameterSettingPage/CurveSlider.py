@@ -51,7 +51,7 @@ class CurveSlider(QWidget):
         #刻度位置，刻度下方
         self.s1.setTickPosition(QSlider.TicksBelow)
         #設置刻度間距
-        self.s1.setTickInterval(1)
+        self.s1.setTickInterval(10)
         Vlayout.addWidget(self.s1)
         #設置連接信號槽函數
         self.s1.valueChanged.connect(self.valuechange)

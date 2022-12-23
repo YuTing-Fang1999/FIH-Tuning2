@@ -139,6 +139,7 @@ class PushAndSaveBlock(QWidget):
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
         
         # param
+        self.tuning.platform = self.data["platform"]
         # config
         self.tuning.rule = config["rule"]
         self.tuning.xml_node = config["xml_node"]
@@ -162,7 +163,7 @@ class PushAndSaveBlock(QWidget):
                 return
         if is_set_to_xml:
             self.set_to_xml()
-            
+
         self.push_worker.is_capture = is_capture
         self.push_worker.start()
 

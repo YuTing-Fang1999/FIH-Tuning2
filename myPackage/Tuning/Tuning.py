@@ -468,11 +468,11 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             if not self.TEST_MODE:
                 for i in range(self.capture_num):
                     if self.capture_num==1:
-                        src_img = 'ind{}_gne{}'.format(ind_idx, gen_idx)
+                        src_img = 'ind{}_gne{}.jpg'.format(ind_idx, gen_idx)
                         des_img = '{}.jpg'.format(ind_idx) # 根據量化分數命名
                         
                     else:
-                        src_img = 'ind{}_{}_gne{}'.format(ind_idx, i, gen_idx)
+                        src_img = 'ind{}_{}_gne{}.jpg'.format(ind_idx, i, gen_idx)
                         des_img = '{}_{}.jpg'.format(ind_idx, i) # 根據量化分數命名
 
                     src='log/{}'.format(src_img)

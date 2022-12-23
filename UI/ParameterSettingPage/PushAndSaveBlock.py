@@ -147,6 +147,7 @@ class PushAndSaveBlock(QWidget):
         self.tuning.data_node = config["data_node"]
 
         self.tuning.xml_path = self.data['xml_path']+config["file_path"]
+        self.trigger_selector.set_data()
         self.tuning.trigger_idx = self.data["trigger_idx"]
         self.tuning.param_names = config['param_names']
         self.tuning.key = self.data["page_key"]

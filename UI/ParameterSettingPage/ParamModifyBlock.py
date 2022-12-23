@@ -132,7 +132,7 @@ class ParamModifyBlock(QWidget):
         for item in self.param_modify_items:
             for i in range(len(item.col)):
                 if item.name[i] == "layer_1_gain_weight_lut":
-                    item.slider.s1.setValue(int(param_value[idx]*2))
+                    item.slider.s1.setValue(int(param_value[idx]*item.slider.factor))
                     idx +=1
                 else:
                     for j in range(item.col[i]):
@@ -149,7 +149,7 @@ class ParamModifyBlock(QWidget):
         for item in self.param_modify_items:
             for i in range(len(item.col)):
                 if item.name[i] == "layer_1_gain_weight_lut":
-                    param_value.append(item.slider.s1.value()/2)
+                    param_value.append(item.slider.s1.value()/item.slider.factor)
                     idx += 1
                 else:
                     for j in range(item.col[i]):
@@ -179,7 +179,7 @@ class ParamModifyBlock(QWidget):
         for item in self.param_modify_items:
             for i in range(len(item.col)):
                 if item.name[i] == "layer_1_gain_weight_lut":
-                        param_value.append(item.slider.s1.value()/2)
+                        param_value.append(item.slider.s1.value()/item.slider.factor)
                 else:
                     for j in range(item.col[i]):
                         if item.lineEdits[i][j].text() == "":

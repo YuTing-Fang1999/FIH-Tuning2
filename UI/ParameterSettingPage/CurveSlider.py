@@ -31,6 +31,7 @@ class MplCanvasPlot():
 class CurveSlider(QWidget):
     def __init__(self):
         super(CurveSlider, self).__init__()
+        self.factor = 10
         #設置標題與初始大小
         self.setWindowTitle('QSlider例子')
         self.resize(300,100)
@@ -42,7 +43,7 @@ class CurveSlider(QWidget):
         ##設置最小值
         self.s1.setMinimum(0)
         #設置最大值
-        self.s1.setMaximum(40)
+        self.s1.setMaximum(100)
         #步長
         self.s1.setSingleStep(1)
         #設置當前值
@@ -50,7 +51,7 @@ class CurveSlider(QWidget):
         #刻度位置，刻度下方
         self.s1.setTickPosition(QSlider.TicksBelow)
         #設置刻度間距
-        self.s1.setTickInterval(5)
+        self.s1.setTickInterval(1)
         Vlayout.addWidget(self.s1)
         #設置連接信號槽函數
         self.s1.valueChanged.connect(self.valuechange)
@@ -72,7 +73,7 @@ class CurveSlider(QWidget):
         #輸出當前地刻度值，利用刻度值來調節字體大小
         # print('current slider value=%s'%self.s1.value())
         x = np.arange(64)
-        y = self.func(x, self.s1.value()/2)
+        y = self.func(x, self.s1.value()/self.factor)
         self.canvas_plot.update(y)
 
 if __name__ == '__main__':

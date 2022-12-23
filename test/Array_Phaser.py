@@ -68,12 +68,6 @@ class Array_Phaser():
 
         return self.text
 
-
-
-path = 'chromatix_hi556_j3_main_snapshot.h'
-with open(path, 'r', encoding='cp1252') as f:
-    text = f.read()
-
 s = """
 /* Header Version Info */
 {
@@ -108,21 +102,12 @@ s = """
 },
 11
 """
-arr_phaser = Array_Phaser(list(text))
-# arr_phaser.get(1).get(3).get(5).text = "1234"
-# print(''.join(arr_phaser.get(1).reconstruct()[:1000]))
 
-abf_node = arr_phaser.get(1).get(3).get(5)
-trigger_idx=0
-
-for i in range(len(abf_node.get(trigger_idx).get(0).pos_arr)):
-    abf_node.get(trigger_idx).get(0).get(i).text = str(i)
-
-path = 'chromatix_hi556_j3_main_snapshot_modify.h'
-with open(path, 'w', encoding='cp1252') as f:
-    f.write(''.join(arr_phaser.reconstruct()))
+if __name__ == "__main__":
+    arr_phaser = Array_Phaser(list(s))
+    arr_phaser.get(0).get(10).get(2).text = "1234"
+    print(''.join(arr_phaser.get(0).get(10).reconstruct()))
 
 
 
-# ABF
-# FILE: 
+

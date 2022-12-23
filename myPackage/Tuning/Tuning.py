@@ -108,6 +108,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.TRAIN = self.data["TRAIN"]
 
         ##### param setting #####
+        self.platform = self.data["platform"]
         self.key = self.data["page_key"]
         config = self.config[self.data["page_root"]][self.data["page_key"]]
         block_data = self.data[self.data["page_root"]][self.data["page_key"]]
@@ -309,7 +310,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 self.csv_data[ind_idx+2][1] = self.fitness[ind_idx]
                 self.best_csv_data[ind_idx+2][1] = self.fitness[ind_idx]
 
-            # 將圖片搬移到best資料夾
+            # 將圖片複製到best資料夾
             if not self.TEST_MODE:
                 for i in range(self.capture_num):
                     if self.capture_num==1:
@@ -463,7 +464,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
             self.IQMs[ind_idx] = now_IQM
             self.pop[ind_idx] = trial
 
-            # 將圖片搬移到best資料夾
+            # 將圖片複製到best資料夾
             if not self.TEST_MODE:
                 for i in range(self.capture_num):
                     if self.capture_num==1:
@@ -667,55 +668,60 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
 
     def setParamToXML(self, param_value):
         self.log_info_signal.emit('param_value: {}'.format(param_value))
-        # 從檔案載入並解析 XML 資料
-        tree = ET.parse(self.xml_path)
-        root = tree.getroot()
 
-        # 子節點與屬性
-        mod_aec_datas = root.findall(self.xml_node)
-        # expand param
-        param_value = np.concatenate([[p]*n for p,n in zip(param_value, self.expand)])
-        if self.key=="ASF":
-            param_value = np.concatenate([param_value[:-1], self.curve_converter(np.arange(64), param_value[-1])])
-        # self.log_info_signal.emit('setParamToXML: {}'.format(param_value))
+        
+                
 
-        for i, ele in enumerate(mod_aec_datas):
-            if i==self.trigger_idx:
-                rgn_data = ele.find(self.data_node)
-                dim = 0
-                for param_name in self.param_names:
-                    parent = rgn_data.find(param_name+'_tab')
-                    if parent:
+        if self.platform == "c7project":
+            # 從檔案載入並解析 XML 資料
+            tree = ET.parse(self.xml_path)
+            root = tree.getroot()
 
-                        length = int(parent.attrib['length'])
+            # 子節點與屬性
+            mod_aec_datas = root.findall(self.xml_node)
+            # expand param
+            param_value = np.concatenate([[p]*n for p,n in zip(param_value, self.expand)])
+            if self.key=="ASF":
+                param_value = np.concatenate([param_value[:-1], self.curve_converter(np.arange(64), param_value[-1])])
+            # self.log_info_signal.emit('setParamToXML: {}'.format(param_value))
 
-                        param_value_new = param_value[dim: dim+length]
-                        param_value_new = [str(x) for x in param_value_new]
-                        param_value_new = ' '.join(param_value_new)
+            for i, ele in enumerate(mod_aec_datas):
+                if i==self.trigger_idx:
+                    rgn_data = ele.find(self.data_node)
+                    dim = 0
+                    for param_name in self.param_names:
+                        parent = rgn_data.find(param_name+'_tab')
+                        if parent:
 
-                        # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
-                        rgn_data.find(param_name+'_tab/' + param_name).text = param_value_new
-                        # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                            length = int(parent.attrib['length'])
 
-                    else:
-                        parent = rgn_data.find(param_name)
+                            param_value_new = param_value[dim: dim+length]
+                            param_value_new = [str(x) for x in param_value_new]
+                            param_value_new = ' '.join(param_value_new)
 
-                        length = int(parent.attrib['length'])
+                            # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                            rgn_data.find(param_name+'_tab/' + param_name).text = param_value_new
+                            # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
 
-                        param_value_new = param_value[dim: dim+length]
-                        param_value_new = [str(x) for x in param_value_new]
-                        param_value_new = ' '.join(param_value_new)
+                        else:
+                            parent = rgn_data.find(param_name)
 
-                        # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
-                        parent.text = param_value_new
-                        # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                            length = int(parent.attrib['length'])
+
+                            param_value_new = param_value[dim: dim+length]
+                            param_value_new = [str(x) for x in param_value_new]
+                            param_value_new = ' '.join(param_value_new)
+
+                            # print('old param', wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
+                            parent.text = param_value_new
+                            # print('new param',wnr24_rgn_data.find(param_name+'_tab/'+param_name).text)
 
 
-                    dim += length
-                break
+                        dim += length
+                    break
 
-        # write the xml file
-        tree.write(self.xml_path, encoding='UTF-8', xml_declaration=True)
+            # write the xml file
+            tree.write(self.xml_path, encoding='UTF-8', xml_declaration=True)
 
     def buildAndPushToCamera(self, exe_path, project_path, bin_name):
         self.log_info_signal.emit('push bin to camera...')

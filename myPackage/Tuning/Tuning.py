@@ -199,7 +199,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
         self.ML_update_rate=0
 
         # 退火
-        self.T = 1
+        self.T = 0.8
         if self.TRAIN: self.T=10
 
         if len(self.data["target_type"])==0:
@@ -580,7 +580,7 @@ class Tuning(QObject):  # 要繼承QWidget才能用pyqtSignal!!
                 if p<np.random.random(): 
                     return True # p越小越容易比他大
         
-        self.T *= 0.8
+        self.T *= 0.99
         
         return False
 

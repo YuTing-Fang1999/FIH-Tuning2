@@ -99,7 +99,7 @@ class TriggerSelector(QComboBox):
                         length = 1
 
                     # WNR 暫定2取1
-                    if param_name in ["denoise_weight_y", "denoise_weight_chroma"]:
+                    if param_name in ["denoise_weight_chroma"]:
                         param_value = [param_value[0],param_value[2]]
                         length = 2
 
@@ -111,6 +111,8 @@ class TriggerSelector(QComboBox):
 
         # converting 2d list into 1d
         block_data['param_value'] = sum(block_data['param_value'], [])
+        print(block_data['param_value'] )
+        print(block_data['defult_range'])
 
         self.parameter_setting_page.param_modify_block.update_param_value_UI(block_data['param_value'])
         self.parameter_setting_page.param_range_block.update_defult_range_UI(block_data['defult_range'])
